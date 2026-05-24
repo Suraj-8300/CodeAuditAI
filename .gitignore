@@ -1,0 +1,10 @@
+.venv/
+.env
+__pycache__/
+app/services/chroma_storage/
+learning/chroma_db_storage/
+.venv/
+.env
+__pycache__/
+app/services/chroma_storage/
+learning/chroma_db_storage/

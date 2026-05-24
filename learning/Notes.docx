@@ -1,0 +1,23 @@
+📝 Module 1: The Plumbing (Core Takeaways)
+
+1. The Synchronous vs. Asynchronous Divide
+
+Synchronous (Blocking): Code runs line-by-line sequentially. If an AI API call takes 5 seconds, the entire application freezes for those 5 seconds. No other user can get a response during this time.
+
+Asynchronous (Non-Blocking): Python uses an Event Loop. When code hits an await keyword (like waiting for an AI model response), it pauses that specific task, yields control back to the event loop to handle other incoming requests, and resumes when the data arrives.
+
+
+2. Some keywords
+
+The & operator: Tells the Linux bash shell to execute a command in the background, keeping your primary terminal prompt free.
+
+Job ID (e.g., [1]): The sequential order of background tasks managed by your specific terminal session.
+
+Process ID / PID (e.g., 9860): A unique, system-wide identification number assigned by the Linux kernel to every single running program. It allows you to track, monitor, or forcefully terminate (kill <PID>) any task.
+
+
+3. Production API Design with FastAPI
+
+FastAPI + Uvicorn: Built natively on ASGI (Asynchronous Server Gateway Interface), allowing it to process multiple web requests concurrently over a single thread.
+
+The Rule of Thumb: Inside async endpoints (async def), you must never use traditional blocking functions (like time.sleep() or requests.get()). Always use their async counterparts (asyncio.sleep() or httpx.get()), or you will accidentally break the event loop and freeze your app.

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+langchain
+langgraph
+chromadb
+python-dotenv
+langchain-text-splitters
+langchain-google-genai
