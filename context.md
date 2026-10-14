@@ -121,7 +121,8 @@ Audits run through an autonomous multi-agent pipeline:
 │   ├── main.py                          # FastAPI gateway, UI routing, & REST endpoints
 │   ├── cli.py                           # Enterprise terminal CLI (codeaudit)
 │   ├── static/
-│   │   └── index.html                   # Google Material 3 single-page Studio & Docs
+│   │   ├── index.html                   # Google Material 3 Web Review Studio & Landing
+│   │   └── docs.html                    # Dedicated Developer CLI Documentation Portal
 │   ├── agents/
 │   │   └── reviewer.py                  # LangGraph multi-agent consensus pipeline
 │   └── services/

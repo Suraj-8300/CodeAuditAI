@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Documentation — CodeAuditAI CLI & Multi-Agent Architecture</title>
+  
+  <!-- Google Fonts: Google Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Google Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'Fira Code', 'monospace']
+          },
+          colors: {
+            google: {
+              blue: '#1a73e8',
+              blueHover: '#1557b0',
+              blueLight: '#e8f0fe',
+              green: '#1e8e3e',
+              greenLight: '#e6f4ea',
+              yellow: '#f9ab00',
+              yellowLight: '#fef7e0',
+              red: '#d93025',
+              redLight: '#fce8e6',
+              greySurface: '#f8fafd',
+              greyBorder: '#dadce0',
+              greyText: '#5f6368',
+              darkSurface: '#131314',
+              darkCard: '#1e1f20',
+              darkBorder: '#3c4043'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Prism.js Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  
+  <style>
+    /* Google Elevation Shadows */
+    .google-shadow-1 { box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
+    .google-shadow-2 { box-shadow: 0 1px 3px 0 rgba(60,64,67,.2), 0 4px 8px 3px rgba(60,64,67,.1); }
+    
+    /* Smooth Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(120, 120, 120, 0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.45); }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Active sidebar item */
+    .sidebar-link.active {
+      background-color: rgba(26, 115, 232, 0.1);
+      color: #1a73e8;
+      font-weight: 600;
+    }
+    .dark .sidebar-link.active {
+      background-color: rgba(66, 133, 244, 0.15);
+      color: #8ab4f8;
+    }
+  </style>
+</head>
+<body class="bg-google-greySurface dark:bg-[#131314] text-[#202124] dark:text-[#e3e3e3] min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
+
+  <!-- ========================================================================= -->
+  <!-- TOP HEADER -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-md border-b border-google-greyBorder dark:border-google-darkBorder">
+    <div class="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Left: Mobile Menu Toggle & Logo -->
+      <div class="flex items-center space-x-3 shrink-0">
+        <button onclick="toggleMobileSidebar()" class="lg:hidden w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-google-darkCard text-slate-700 dark:text-slate-200">
+          <i class="fa-solid fa-bars text-sm"></i>
+        </button>
+        <a href="/" class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-shield-halved text-base"></i>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-base sm:text-lg font-bold tracking-tight text-[#202124] dark:text-white">CodeAudit<span class="text-blue-600 dark:text-blue-400">AI</span></span>
+            <span class="text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">Docs</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Center: Interactive Search Trigger -->
+      <div class="flex-1 max-w-xl mx-2 sm:mx-6">
+        <button onclick="openSearchModal()" class="w-full bg-google-greySurface dark:bg-[#2d2f31] hover:bg-slate-100 dark:hover:bg-[#35373a] border border-google-greyBorder dark:border-google-darkBorder rounded-full px-4 py-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between transition shadow-sm">
+          <div class="flex items-center space-x-2.5 truncate">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+            <span class="truncate">Search documentation, commands, architecture...</span>
+          </div>
+          <div class="hidden sm:flex items-center space-x-1 font-mono text-[10px] bg-white dark:bg-google-darkCard border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md shadow-inner text-slate-400">
+            <span>Ctrl</span><span>K</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Right: Links, Theme Toggle, Studio Button -->
+      <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 text-xs">
+        <a href="/studio" class="hidden sm:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 font-semibold transition">
+          <i class="fa-solid fa-cubes-stacked text-xs"></i>
+          <span>Web Studio</span>
+        </a>
+
+        <button onclick="toggleTheme()" id="btn-theme-toggle" title="Toggle Light/Dark Theme" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">
+          <i id="theme-icon" class="fa-solid fa-moon"></i>
+        </button>
+
+        <a href="https://github.com/Suraj-8300/CodeAuditAI" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202124] text-white hover:bg-black transition font-medium">
+          <i class="fa-brands fa-github text-sm"></i>
+          <span class="hidden md:inline">GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 3-COLUMN DOCUMENTATION LAYOUT -->
+  <!-- ========================================================================= -->
+  <div class="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col lg:flex-row gap-8 py-6">
+    
+    <!-- ======================================================================= -->
+    <!-- LEFT NAVIGATION SIDEBAR (Collapsible on Mobile) -->
+    <!-- ======================================================================= -->
+    <aside id="docs-sidebar" class="fixed lg:sticky top-0 lg:top-20 z-50 lg:z-10 left-0 h-full lg:h-[calc(100vh-6rem)] w-72 lg:w-64 xl:w-72 bg-white dark:bg-google-darkCard lg:bg-transparent p-5 lg:p-0 border-r lg:border-r-0 border-google-greyBorder dark:border-google-darkBorder overflow-y-auto space-y-6 text-xs transform -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-google-greyBorder dark:border-google-darkBorder lg:hidden">
+        <span class="font-bold text-sm text-[#202124] dark:text-white">Documentation Menu</span>
+        <button onclick="toggleMobileSidebar()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Category 1: Get Started -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          Get Started
+        </div>
+        <a href="#overview" onclick="loadDoc('overview')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Overview & Mission</a>
+        <a href="#quickstart" onclick="loadDoc('quickstart')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Quickstart (60s)</a>
+        <a href="#installation" onclick="loadDoc('installation')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Installation & Setup</a>
+        <a href="#authentication" onclick="loadDoc('authentication')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Authentication (Free Tier)</a>
+        <a href="#cheatsheet" onclick="loadDoc('cheatsheet')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">CLI Cheatsheet</a>
+      </div>
+
+      <!-- Category 2: Using CodeAudit CLI -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          Using CodeAudit CLI
+        </div>
+        <a href="#cmd-web" onclick="loadDoc('cmd-web')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Launch Web Studio (`web`)</a>
+        <a href="#cmd-audit" onclick="loadDoc('cmd-audit')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Repository Audit (`audit`)</a>
+        <a href="#cmd-snippet" onclick="loadDoc('cmd-snippet')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Snippet Auditing (`snippet`)</a>
+        <a href="#cmd-languages" onclick="loadDoc('cmd-languages')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Languages Matrix (`languages`)</a>
+        <a href="#cmd-projects" onclick="loadDoc('cmd-projects')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Project Cache (`projects`)</a>
+        <a href="#importance-filtering" onclick="loadDoc('importance-filtering')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">High-Risk vs Full Audits (`--all`)</a>
+      </div>
+
+      <!-- Category 3: Multi-Agent Engine Internals -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          Engine Architecture
+        </div>
+        <a href="#tri-agent-consensus" onclick="loadDoc('tri-agent-consensus')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Tri-Agent Consensus Pipeline</a>
+        <a href="#security-auditor" onclick="loadDoc('security-auditor')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Security Auditor & CWE Mapping</a>
+        <a href="#performance-critic" onclick="loadDoc('performance-critic')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Performance Critic & Big-O Engine</a>
+        <a href="#joint-reconciler" onclick="loadDoc('joint-reconciler')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Joint Reconciler (Zero Trade-offs)</a>
+        <a href="#vector-memory" onclick="loadDoc('vector-memory')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Whole-Repo ChromaDB Memory</a>
+        <a href="#sarif-export" onclick="loadDoc('sarif-export')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">OASIS SARIF v2.1.0 Specification</a>
+      </div>
+
+      <!-- Category 4: Configuration & Tuning -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          Configuration & Tuning
+        </div>
+        <a href="#env-vars" onclick="loadDoc('env-vars')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Environment Variables</a>
+        <a href="#byok-providers" onclick="loadDoc('byok-providers')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">BYOK Provider Setup</a>
+        <a href="#quota-routing" onclick="loadDoc('quota-routing')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Quota Protection (429 Prevention)</a>
+        <a href="#custom-proxies" onclick="loadDoc('custom-proxies')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Air-Gapped & Ollama Proxies</a>
+      </div>
+
+      <!-- Category 5: CI/CD & Automation -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          CI/CD & Automation
+        </div>
+        <a href="#github-actions" onclick="loadDoc('github-actions')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">GitHub Actions Security Gate</a>
+        <a href="#gitlab-precommit" onclick="loadDoc('gitlab-precommit')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">GitLab CI & Pre-commit Hooks</a>
+        <a href="#exit-codes" onclick="loadDoc('exit-codes')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Exit Codes & Automation Logic</a>
+      </div>
+
+      <!-- Category 6: Resources & Community -->
+      <div class="space-y-1">
+        <div class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400">
+          Resources
+        </div>
+        <a href="#faq" onclick="loadDoc('faq')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">FAQ</a>
+        <a href="#quota-pricing" onclick="loadDoc('quota-pricing')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Quota & Pricing Limits</a>
+        <a href="#troubleshooting" onclick="loadDoc('troubleshooting')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Troubleshooting Guide</a>
+      </div>
+
+    </aside>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="lg:hidden hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"></div>
+
+    <!-- ======================================================================= -->
+    <!-- CENTER MAIN DOCUMENTATION ARTICLE -->
+    <!-- ======================================================================= -->
+    <main class="flex-1 min-w-0 bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-6 sm:p-10 google-shadow-1">
+      
+      <!-- Breadcrumbs & Meta Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-google-greyBorder dark:border-google-darkBorder text-xs text-google-greyText dark:text-slate-400">
+        <div class="flex items-center space-x-2 font-mono">
+          <span>Docs</span>
+          <i class="fa-solid fa-chevron-right text-[9px] opacity-40"></i>
+          <span id="doc-breadcrumb-category" class="font-semibold text-slate-700 dark:text-slate-300">Get Started</span>
+          <i class="fa-solid fa-chevron-right text-[9px] opacity-40"></i>
+          <span id="doc-breadcrumb-title" class="text-blue-600 dark:text-blue-400 font-bold">Overview</span>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <span class="flex items-center space-x-1.5 font-mono">
+            <i class="fa-regular fa-clock"></i>
+            <span id="doc-reading-time">4 min read</span>
+          </span>
+          <button onclick="copyDocContent()" class="hover:text-blue-600 flex items-center space-x-1 transition">
+            <i class="fa-regular fa-copy"></i>
+            <span>Copy Page</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Article Content Injection Target -->
+      <article id="doc-article-container" class="mt-6 space-y-8 text-xs sm:text-sm leading-relaxed">
+        <!-- Rendered dynamically by JavaScript -->
+      </article>
+
+      <!-- Bottom Next / Previous Article Navigation -->
+      <div class="mt-12 pt-8 border-t border-google-greyBorder dark:border-google-darkBorder flex items-center justify-between text-xs font-semibold">
+        <button id="btn-prev-doc" onclick="navPrevDoc()" class="flex items-center space-x-2 text-google-greyText dark:text-slate-400 hover:text-blue-600 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span id="label-prev-doc">Previous</span>
+        </button>
+        <button id="btn-next-doc" onclick="navNextDoc()" class="flex items-center space-x-2 text-google-greyText dark:text-slate-400 hover:text-blue-600 transition">
+          <span id="label-next-doc">Next</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- ======================================================================= -->
+    <!-- RIGHT SIDEBAR ("ON THIS PAGE") -->
+    <!-- ======================================================================= -->
+    <aside class="hidden xl:block w-60 shrink-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto space-y-4 text-xs">
+      <div class="font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400 text-[11px]">
+        On this page
+      </div>
+      <nav id="on-this-page-nav" class="space-y-1.5 border-l-2 border-slate-200 dark:border-google-darkBorder pl-3">
+        <!-- Populated dynamically based on current doc -->
+      </nav>
+
+      <div class="pt-6 border-t border-google-greyBorder dark:border-google-darkBorder space-y-3">
+        <a href="https://github.com/Suraj-8300/CodeAuditAI/issues/new" target="_blank" class="text-slate-500 hover:text-blue-600 flex items-center space-x-1.5 transition">
+          <i class="fa-regular fa-comment-dots"></i>
+          <span>Report doc feedback</span>
+        </a>
+        <a href="/studio" class="text-blue-600 hover:underline flex items-center space-x-1.5 font-semibold">
+          <i class="fa-solid fa-rocket text-xs"></i>
+          <span>Open Interactive Studio</span>
+        </a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- SEARCH MODAL (Ctrl + K) -->
+  <!-- ========================================================================= -->
+  <div id="search-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-start justify-center pt-20 px-4">
+    <div class="bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder w-full max-w-xl google-shadow-3 overflow-hidden text-xs">
+      <div class="p-4 border-b border-google-greyBorder dark:border-google-darkBorder flex items-center space-x-3">
+        <i class="fa-solid fa-magnifying-glass text-blue-600"></i>
+        <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search commands, flags, architecture, guides..."
+          class="flex-1 bg-transparent border-none outline-none text-[#202124] dark:text-white placeholder-slate-400 font-sans text-sm">
+        <kbd class="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded">Esc</kbd>
+      </div>
+      <div id="search-results" class="max-h-80 overflow-y-auto p-2 space-y-1">
+        <div class="p-6 text-center text-slate-400">Type a keyword to find documentation articles...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 pointer-events-none text-xs">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toast-msg">Copied!</span>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- DOCUMENTATION ARTICLES REPOSITORY & CLIENT ENGINE -->
+  <!-- ========================================================================= -->
+  <script>
+    // Complete Documentation Articles Database
+    const DOCS_DATA = {
+      overview: {
+        category: "Get Started",
+        title: "Overview & Mission",
+        time: "3 min read",
+        headings: [
+          { id: "the-problem", text: "The Software Audit Dilemma" },
+          { id: "our-solution", text: "CodeAuditAI Tri-Agent Architecture" },
+          { id: "core-capabilities", text: "Core Capabilities" },
+          { id: "next-steps", text: "Next Steps" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">CodeAuditAI Overview</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300 leading-relaxed">
+            <strong>CodeAuditAI</strong> is an autonomous multi-agent code security and performance review studio engineered for high-velocity software engineering teams.
+            It provides automated, context-grounded polyglot audits across <strong>25+ programming languages</strong>.
+          </p>
+
+          <h2 id="the-problem" class="text-lg font-bold text-[#202124] dark:text-white pt-4">The Software Audit Dilemma</h2>
+          <p>Traditional static code analysis forces teams to choose between two flawed approaches:</p>
+          <ul class="list-disc pl-5 space-y-2 text-slate-600 dark:text-slate-300">
+            <li><strong>Static AST Linters (SonarQube, ESLint, Cppcheck):</strong> Rely on rigid syntax regexes. They produce overwhelming false positives and cannot evaluate dynamic business logic or propose context-aware patches.</li>
+            <li><strong>Generic LLM Chatbots (ChatGPT, Claude web):</strong> Operate on isolated snippets with zero awareness of project structure, imported modules, or cross-file data contracts.</li>
+          </ul>
+
+          <h2 id="our-solution" class="text-lg font-bold text-[#202124] dark:text-white pt-4">CodeAuditAI Tri-Agent Architecture</h2>
+          <p>
+            CodeAuditAI combines <strong>whole-codebase vector semantic memory (ChromaDB)</strong> with a <strong>LangGraph Tri-Agent Consensus Pipeline</strong>:
+          </p>
+          <div class="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-700">
+[Target Code File] ──► [Language Detector + ChromaDB Vector Chunks]
+                            │
+               ┌────────────┴────────────┐
+               ▼                         ▼
+      [🛡️ Security Auditor]     [⚡ Performance Critic]
+      (OWASP, CWE-89, Memory)   (Big-O, Leaks, CPU Ops)
+               │                         │
+               └────────────┬────────────┘
+                            ▼
+                  [🤝 Joint Reconciler]
+                  (Synthesizes Patches)
+                            │
+               ┌────────────┴────────────┐
+               ▼                         ▼
+      [OASIS SARIF v2.1.0]      [Executive Markdown]
+          </div>
+
+          <h2 id="core-capabilities" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Core Capabilities</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800">
+              <h3 class="font-bold text-blue-600">🛡️ Tri-Agent Consensus</h3>
+              <p class="text-xs text-slate-500 mt-1">Guarantees security patches never degrade execution speed.</p>
+            </div>
+            <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800">
+              <h3 class="font-bold text-emerald-600">🌍 25+ Polyglot Languages</h3>
+              <p class="text-xs text-slate-500 mt-1">Custom heuristics for C/C++, Java, JS/TS, Python, Go, Rust, PHP.</p>
+            </div>
+            <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800">
+              <h3 class="font-bold text-purple-600">📦 SARIF v2.1.0 Ready</h3>
+              <p class="text-xs text-slate-500 mt-1">Direct upload to GitHub Advanced Security tab & VS Code.</p>
+            </div>
+            <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800">
+              <h3 class="font-bold text-amber-600">🔑 Free Tier BYOK</h3>
+              <p class="text-xs text-slate-500 mt-1">Optimized for Google AI Studio (500 free requests/day).</p>
+            </div>
+          </div>
+        `
+      },
+
+      quickstart: {
+        category: "Get Started",
+        title: "Quickstart Guide",
+        time: "2 min read",
+        headings: [
+          { id: "step-1", text: "Step 1: Install CodeAuditAI" },
+          { id: "step-2", text: "Step 2: Add API Key" },
+          { id: "step-3", text: "Step 3: Run Your First Audit" },
+          { id: "step-4", text: "Step 4: Launch Web Studio" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Quickstart Guide</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Run your first multi-agent code audit in under 60 seconds.</p>
+
+          <h2 id="step-1" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Step 1: Install CodeAuditAI</h2>
+          <p>Run the automated setup script to install dependencies and create the <code>codeaudit</code> executable:</p>
+          <div class="relative bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash</code>
+          </div>
+
+          <h2 id="step-2" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Step 2: Add Free Google AI Studio Key</h2>
+          <p>Grab a zero-cost API key from <a href="https://aistudio.google.com" target="_blank" class="text-blue-600 underline">Google AI Studio</a> (no credit card needed):</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700">
+            <code>export GOOGLE_API_KEY="AIzaSy..."</code>
+          </div>
+
+          <h2 id="step-3" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Step 3: Run Your First Audit</h2>
+          <p>Audit the included sample application containing intentional vulnerabilities:</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700">
+            <div class="text-slate-400"># Audit local demo app and output SARIF and Markdown report</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit audit ./examples/demo-app --all --export-sarif findings.sarif --export-md report.md</div>
+          </div>
+
+          <h2 id="step-4" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Step 4: Launch Web Studio</h2>
+          <p>Start the interactive Google Material 3 review dashboard in your default browser:</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700">
+            <code>codeaudit web</code>
+          </div>
+        `
+      },
+
+      installation: {
+        category: "Get Started",
+        title: "Installation & Setup",
+        time: "4 min read",
+        headings: [
+          { id: "prerequisites", text: "System Prerequisites" },
+          { id: "install-curl", text: "Method A: 1-Line Curl Installer" },
+          { id: "install-git", text: "Method B: Manual Git Clone" },
+          { id: "install-pip", text: "Method C: Direct Pip Install" },
+          { id: "verify", text: "Verifying Installation" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Installation & Setup</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Choose the installation method suited for your environment.</p>
+
+          <h2 id="prerequisites" class="text-lg font-bold text-[#202124] dark:text-white pt-4">System Prerequisites</h2>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-300">
+            <li><strong>Python:</strong> Python 3.10, 3.11, 3.12, 3.13, or 3.14+</li>
+            <li><strong>OS:</strong> Linux (Ubuntu, Debian, Fedora, Arch, RHEL), macOS (Apple Silicon & Intel), Windows (WSL2 recommended)</li>
+            <li><strong>Git:</strong> Required for repository cloning and dependency management</li>
+          </ul>
+
+          <h2 id="install-curl" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Method A: 1-Line Curl Installer (Recommended)</h2>
+          <p>Clones CodeAuditAI to <code>~/.codeaudit</code>, initializes a virtual environment, installs packages, and symlinks <code>~/.local/bin/codeaudit</code>:</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash</code>
+          </div>
+
+          <h2 id="install-git" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Method B: Manual Git Clone (Development Mode)</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700 overflow-x-auto">
+            <div class="text-slate-400">git clone https://github.com/Suraj-8300/CodeAuditAI.git</div>
+            <div class="text-slate-400">cd CodeAuditAI</div>
+            <div class="text-slate-400">python3 -m venv .venv && source .venv/bin/activate</div>
+            <div class="text-emerald-400 font-bold">pip install -r requirements.txt && pip install -e .</div>
+          </div>
+
+          <h2 id="install-pip" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Method C: Direct Pip Install</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>pip install git+https://github.com/Suraj-8300/CodeAuditAI.git</code>
+          </div>
+
+          <h2 id="verify" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Verifying Installation</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700">
+            <code>codeaudit --help</code>
+          </div>
+        `
+      },
+
+      authentication: {
+        category: "Get Started",
+        title: "Authentication (Free Tier)",
+        time: "3 min read",
+        headings: [
+          { id: "free-tier", text: "Google AI Studio Free Tier (Default)" },
+          { id: "quota-facts", text: "Quota Management & 500 RPD Rules" },
+          { id: "other-providers", text: "Configuring Alternative BYOK Keys" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Authentication & BYOK Keys</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">CodeAuditAI operates on a Bring Your Own Key (BYOK) model with zero mandatory subscription fees.</p>
+
+          <h2 id="free-tier" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Google AI Studio Free Tier (Default & Free)</h2>
+          <p>
+            You do <strong>not</strong> need a paid API plan. Google AI Studio offers a completely free tier with no credit card required.
+          </p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>export GOOGLE_API_KEY="AIzaSy..."</code>
+          </div>
+
+          <h2 id="quota-facts" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Quota Management & 500 RPD Rules</h2>
+          <p class="text-amber-600 font-semibold">⚠️ Important Free Tier Quota Details:</p>
+          <table class="w-full text-left border-collapse text-xs mt-2 border border-slate-200 dark:border-google-darkBorder">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <th class="p-2 border">Model Name</th>
+                <th class="p-2 border">Daily Limit (RPD)</th>
+                <th class="p-2 border">Rate (RPM)</th>
+                <th class="p-2 border">CodeAuditAI Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-2 border font-mono font-bold text-emerald-600">gemini-3.5-flash-lite</td>
+                <td class="p-2 border">500 Requests/Day</td>
+                <td class="p-2 border">15 RPM</td>
+                <td class="p-2 border font-bold text-emerald-600">Primary Default ✅</td>
+              </tr>
+              <tr>
+                <td class="p-2 border font-mono text-slate-500">gemini-2.5-flash</td>
+                <td class="p-2 border text-red-500">20 Requests/Day</td>
+                <td class="p-2 border">5 RPM</td>
+                <td class="p-2 border text-slate-500">Fallback Only (Low Quota)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2 id="other-providers" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Configuring Alternative BYOK Keys</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700">
+            <div>export ANTHROPIC_API_KEY="sk-ant-..."   # For Claude 3.7 Sonnet</div>
+            <div>export OPENAI_API_KEY="sk-proj-..."     # For GPT-4o / Codex</div>
+            <div>export DEEPSEEK_API_KEY="sk-..."        # For DeepSeek Coder</div>
+          </div>
+        `
+      },
+
+      cheatsheet: {
+        category: "Get Started",
+        title: "CLI Cheatsheet",
+        time: "3 min read",
+        headings: [
+          { id: "common-commands", text: "Essential Commands" },
+          { id: "export-flags", text: "Export & Reporting Flags" },
+          { id: "provider-flags", text: "LLM Provider Overrides" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">CLI Cheatsheet</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Quick syntax reference for daily engineering workflows.</p>
+
+          <h2 id="common-commands" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Essential Commands</h2>
+          <table class="w-full text-left border-collapse text-xs border border-slate-200 dark:border-google-darkBorder">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr><th class="p-2.5 border">Command</th><th class="p-2.5 border">Description</th></tr>
+            </thead>
+            <tbody class="font-mono">
+              <tr><td class="p-2.5 border text-blue-600 font-bold">codeaudit web</td><td class="p-2.5 border font-sans">Launch Google Material 3 Web Studio</td></tr>
+              <tr><td class="p-2.5 border text-blue-600 font-bold">codeaudit audit &lt;target&gt;</td><td class="p-2.5 border font-sans">Audit GitHub URL or local path</td></tr>
+              <tr><td class="p-2.5 border text-blue-600 font-bold">codeaudit snippet --lang &lt;l&gt; "..."</td><td class="p-2.5 border font-sans">Audit isolated code string</td></tr>
+              <tr><td class="p-2.5 border text-blue-600 font-bold">codeaudit languages</td><td class="p-2.5 border font-sans">Show 25+ language support matrix</td></tr>
+              <tr><td class="p-2.5 border text-blue-600 font-bold">codeaudit projects</td><td class="p-2.5 border font-sans">List previously indexed codebases</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="export-flags" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Export & Reporting Flags</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700">
+            <div># Export SARIF v2.1.0 JSON report</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit audit . --export-sarif findings.sarif</div>
+            <div class="pt-2"># Export executive markdown scorecard</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit audit . --export-md AUDIT_REPORT.md</div>
+            <div class="pt-2"># Audit all source files (bypass High-risk filter)</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit audit . --all</div>
+          </div>
+        `
+      },
+
+      "cmd-web": {
+        category: "Using CodeAudit CLI",
+        title: "Launch Web Studio (`web`)",
+        time: "2 min read",
+        headings: [
+          { id: "syntax", text: "Command Syntax" },
+          { id: "options", text: "Options & Arguments" },
+          { id: "features", text: "Studio Features" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Command: <code>codeaudit web</code></h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Starts the local FastAPI server and launches the interactive Web Review Studio in your browser.</p>
+
+          <h2 id="syntax" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Syntax</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>codeaudit web [--port 8000] [--host 127.0.0.1] [--reload]</code>
+          </div>
+
+          <h2 id="options" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Options</h2>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-300">
+            <li><code>--port &lt;int&gt;</code>: Web server port (Default: <code>8000</code>).</li>
+            <li><code>--host &lt;str&gt;</code>: Network interface to bind to (Default: <code>127.0.0.1</code>).</li>
+            <li><code>--reload</code>: Enable hot-reloading for local UI development.</li>
+          </ul>
+        `
+      },
+
+      "cmd-audit": {
+        category: "Using CodeAudit CLI",
+        title: "Repository Audit (`audit`)",
+        time: "4 min read",
+        headings: [
+          { id: "syntax", text: "Command Syntax" },
+          { id: "remote-audit", text: "Auditing Remote GitHub Repos" },
+          { id: "local-audit", text: "Auditing Local Directories" },
+          { id: "flags-table", text: "Full Flags Table" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Command: <code>codeaudit audit</code></h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Performs whole-codebase AST parsing, ChromaDB semantic vector indexing, and LangGraph multi-agent auditing.</p>
+
+          <h2 id="syntax" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Syntax</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>codeaudit audit &lt;target&gt; [--all] [--export-sarif &lt;path&gt;] [--export-md &lt;path&gt;]</code>
+          </div>
+
+          <h2 id="remote-audit" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Auditing Remote GitHub Repos</h2>
+          <p>Pass any public or accessible private repository URL. CodeAuditAI automatically clones, hashes, and audits the files:</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>$ codeaudit audit https://github.com/expressjs/express --export-sarif express.sarif</code>
+          </div>
+
+          <h2 id="local-audit" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Auditing Local Directories</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>$ codeaudit audit ./my-backend-service --all --export-md AUDIT.md</code>
+          </div>
+        `
+      },
+
+      "cmd-snippet": {
+        category: "Using CodeAudit CLI",
+        title: "Snippet Auditing (`snippet`)",
+        time: "2 min read",
+        headings: [
+          { id: "syntax", text: "Command Syntax" },
+          { id: "examples", text: "Language Examples" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Command: <code>codeaudit snippet</code></h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Execute in-memory multi-agent audits on raw code strings without creating or modifying local files.</p>
+
+          <h2 id="syntax" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Syntax</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>codeaudit snippet --lang &lt;language&gt; "&lt;code string&gt;"</code>
+          </div>
+
+          <h2 id="examples" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Examples</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700">
+            <div class="text-slate-400"># Audit C string buffer copy</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit snippet --lang c "char b[16]; strcpy(b, input);"</div>
+            <div class="text-slate-400 pt-2"># Audit JavaScript DOM assignment</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit snippet --lang javascript "document.getElementById('c').innerHTML = data;"</div>
+          </div>
+        `
+      },
+
+      "cmd-languages": {
+        category: "Using CodeAudit CLI",
+        title: "Languages Matrix (`languages`)",
+        time: "2 min read",
+        headings: [
+          { id: "syntax", text: "Syntax & Terminal Output" },
+          { id: "supported-list", text: "Supported Language Tiers" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Command: <code>codeaudit languages</code></h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Renders the complete polyglot support matrix, file extension mappings, and customized audit rules in your terminal.</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>codeaudit languages</code>
+          </div>
+        `
+      },
+
+      "cmd-projects": {
+        category: "Using CodeAudit CLI",
+        title: "Project Cache (`projects`)",
+        time: "2 min read",
+        headings: [
+          { id: "listing", text: "Listing Indexed Projects" },
+          { id: "deletion", text: "Purging Projects & Cache" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Command: <code>codeaudit projects</code></h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Inspect and manage codebases stored in the local SQLite audit database.</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700">
+            <div class="text-slate-400"># View all indexed repositories</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit projects</div>
+            <div class="text-slate-400 pt-2"># Delete project and all associated cached audits</div>
+            <div class="text-emerald-400 font-bold">$ codeaudit projects --delete /path/to/project</div>
+          </div>
+        `
+      },
+
+      "tri-agent-consensus": {
+        category: "Engine Architecture",
+        title: "Tri-Agent Consensus Pipeline",
+        time: "5 min read",
+        headings: [
+          { id: "orchestration", text: "LangGraph Orchestration Flow" },
+          { id: "security-node", text: "Security Auditor Node" },
+          { id: "perf-node", text: "Performance Critic Node" },
+          { id: "reconciler-node", text: "Joint Reconciler Node" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">LangGraph Tri-Agent Consensus Pipeline</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">How CodeAuditAI eliminates trade-offs between security hardening and performance efficiency.</p>
+
+          <h2 id="orchestration" class="text-lg font-bold text-[#202124] dark:text-white pt-4">LangGraph Orchestration Flow</h2>
+          <p>Audits run through an autonomous acyclic graph built on LangGraph:</p>
+          <ol class="list-decimal pl-5 space-y-2 text-slate-600 dark:text-slate-300">
+            <li><strong>Parallel Fan-Out:</strong> The file source code and retrieved semantic vector chunks are dispatched simultaneously to the <code>Security Auditor</code> and <code>Performance Critic</code>.</li>
+            <li><strong>Independent Evaluation:</strong> Both nodes formulate independent findings, referencing official CWE dictionaries and Big-O complexity models.</li>
+            <li><strong>Fan-In Reconciliation:</strong> The <code>Joint Reconciler</code> evaluates both outputs, resolves conflicting suggestions, and produces a unified verdict: <code>CRITICAL</code>, <code>WARNING</code>, or <code>SAFE</code>.</li>
+          </ol>
+        `
+      },
+
+      "github-actions": {
+        category: "CI/CD & Automation",
+        title: "GitHub Actions Security Gate",
+        time: "3 min read",
+        headings: [
+          { id: "workflow-yml", text: "Production Workflow File" },
+          { id: "security-tab", text: "GitHub Security Tab Integration" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">GitHub Actions CI/CD Integration</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Automate code auditing on every pull request and upload findings directly into GitHub Code Scanning.</p>
+
+          <h2 id="workflow-yml" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Workflow Configuration (<code>.github/workflows/codeaudit.yml</code>)</h2>
+          <pre class="bg-slate-900 text-slate-100 p-4 rounded-2xl text-xs font-mono overflow-x-auto border border-slate-700"><code>name: CodeAuditAI Security Gate
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CodeAuditAI
+        run: |
+          pip install git+https://github.com/Suraj-8300/CodeAuditAI.git
+      - name: Run Multi-Agent Audit
+        env:
+          GOOGLE_API_KEY: \${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          codeaudit audit . --all --export-sarif findings.sarif
+      - name: Upload Findings to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: findings.sarif</code></pre>
+        `
+      },
+
+      "quota-pricing": {
+        category: "Resources",
+        title: "Quota & Pricing Limits",
+        time: "3 min read",
+        headings: [
+          { id: "google-tiers", text: "Google AI Studio Quotas" },
+          { id: "mitigating-429", text: "Mitigating HTTP 429 Errors" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Quota & Pricing Limits</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Detailed breakdown of free tier limits across AI providers.</p>
+
+          <h2 id="google-tiers" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Google AI Studio Free Tier Quotas</h2>
+          <p>Google AI Studio provides generous free tiers for developers:</p>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-300">
+            <li><strong>gemini-3.5-flash-lite:</strong> 500 Requests Per Day (RPD), 15 Requests Per Minute (RPM), 250,000 Tokens Per Minute. (Default)</li>
+            <li><strong>gemini-2.5-flash:</strong> 20 Requests Per Day (RPD), 5 Requests Per Minute (RPM).</li>
+          </ul>
+
+          <h2 id="mitigating-429" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Mitigating HTTP 429 Errors</h2>
+          <p>
+            When daily quota is exhausted, Google sends <code>retry in X seconds</code>. 
+            CodeAuditAI's engine caps retry waits at <strong>15 seconds max</strong> and automatically fails over across <code>gemini-flash-lite-latest</code> and <code>gemini-3-flash-preview</code> to prevent server freezes.
+          </p>
+        `
+      },
+
+      "importance-filtering": {
+        category: "Using CodeAudit CLI",
+        title: "High-Risk vs Full Audits (`--all`)",
+        time: "3 min read",
+        headings: [
+          { id: "heuristics", text: "How CodeAuditAI Classifies Risk" },
+          { id: "default-mode", text: "Default High-Importance Mode" },
+          { id: "all-flag", text: "Bypassing with --all" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">High-Risk vs Full Audits</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Intelligent triage saves API tokens, prevents quota burnout, and speeds up review cycles.</p>
+
+          <h2 id="heuristics" class="text-lg font-bold text-[#202124] dark:text-white pt-4">How CodeAuditAI Classifies Risk</h2>
+          <p>The <code>RepoMapperService</code> scans every file AST and assigns an architectural importance level:</p>
+          <ul class="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-300">
+            <li><span class="text-red-600 font-bold">High:</span> Entry points (<code>main.py</code>, <code>app.js</code>, <code>server.go</code>), authentication routes, database controllers, payment handlers, and crypto logic.</li>
+            <li><span class="text-amber-600 font-bold">Medium:</span> Helper utilities, business services, middleware, and standard controllers.</li>
+            <li><span class="text-slate-500 font-bold">Low:</span> Static fixtures, unit test cases, build scripts, and mock files.</li>
+          </ul>
+
+          <h2 id="default-mode" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Default Mode: High-Importance Only</h2>
+          <p>By default, <code>codeaudit audit &lt;target&gt;</code> audits only <strong>High-importance files</strong>, returning complete audits in seconds without burning quota.</p>
+
+          <h2 id="all-flag" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Bypassing with <code>--all</code></h2>
+          <p>For pre-release security certification or compliance audits, pass <code>--all</code> to audit every indexed source file:</p>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 border border-slate-700">
+            <code>$ codeaudit audit . --all --export-sarif full_audit.sarif</code>
+          </div>
+        `
+      },
+
+      "security-auditor": {
+        category: "Engine Architecture",
+        title: "Security Auditor & CWE Mapping",
+        time: "4 min read",
+        headings: [
+          { id: "cwe-coverage", text: "CWE & OWASP Vulnerability Scope" },
+          { id: "prompt-grounding", text: "Language-Aware Prompt Grounding" },
+          { id: "ast-heuristics", text: "SARIF Extraction Heuristics" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Security Auditor & CWE Mapping</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Deep inspection of exploit vectors grounded in MITRE Common Weakness Enumeration standards.</p>
+
+          <h2 id="cwe-coverage" class="text-lg font-bold text-[#202124] dark:text-white pt-4">CWE & OWASP Vulnerability Scope</h2>
+          <p>The Security Auditor checks against 19 targeted vulnerability categories:</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-2">
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-89:</span> SQL Injection</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-79:</span> Cross-Site Scripting (XSS)</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-78:</span> OS Command Injection</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-120:</span> Buffer Copy without Check</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-798:</span> Hardcoded Credentials</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-502:</span> Untrusted Deserialization</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-918:</span> Server-Side Request Forgery</div>
+            <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-google-darkBorder"><span class="text-red-500 font-bold">CWE-611:</span> XML External Entity (XXE)</div>
+          </div>
+        `
+      },
+
+      "performance-critic": {
+        category: "Engine Architecture",
+        title: "Performance Critic & Big-O Engine",
+        time: "4 min read",
+        headings: [
+          { id: "algorithmic-complexity", text: "Big-O Time & Space Modeling" },
+          { id: "io-bottlenecks", text: "I/O Leaks & Resource Exhaustion" },
+          { id: "database-patterns", text: "N+1 Query Detection" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Performance Critic & Big-O Engine</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Automated algorithmic analysis detecting runtime bottlenecks and resource leaks.</p>
+
+          <h2 id="algorithmic-complexity" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Big-O Time & Space Modeling</h2>
+          <p>
+            The Performance Critic parses loop bounds, recursion depth, and collection lookups to identify $O(n^2)$ and $O(n \cdot m \cdot k)$ algorithmic anti-patterns.
+            It generates side-by-side comparison scorecards showing theoretical complexity Before vs After optimization.
+          </p>
+
+          <h2 id="database-patterns" class="text-lg font-bold text-[#202124] dark:text-white pt-4">N+1 Query & I/O Leaks</h2>
+          <p>Flags repetitive queries inside loops (<code>CWE-1050</code>) and provides parameterized batch <code>JOIN</code> or <code>IN (...)</code> remediations.</p>
+        `
+      },
+
+      "joint-reconciler": {
+        category: "Engine Architecture",
+        title: "Joint Reconciler (Zero Trade-offs)",
+        time: "3 min read",
+        headings: [
+          { id: "why-reconciler", text: "Why Reconcile Agents?" },
+          { id: "conflict-resolution", text: "Conflict Resolution Strategy" },
+          { id: "verdicts", text: "Unified Verdict Ratings" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Joint Reconciler & Conflict Resolution</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">How CodeAuditAI ensures security patches never degrade execution speed.</p>
+
+          <h2 id="why-reconciler" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Why Reconcile Agents?</h2>
+          <p>
+            Often, a security patch (e.g., adding deep input cloning, synchronous encryption, or recursive sanitization) introduces severe performance regressions.
+            Conversely, a performance optimization (e.g., in-place buffer mutation, caching without invalidation) can introduce race conditions or cache poisoning.
+          </p>
+          <p>
+            The <strong>Joint Reconciler</strong> sits as the terminal fan-in node in LangGraph, evaluating both viewpoints to deliver a synthesized patch that satisfies both security and performance constraints.
+          </p>
+        `
+      },
+
+      "vector-memory": {
+        category: "Engine Architecture",
+        title: "Whole-Repo ChromaDB Memory",
+        time: "4 min read",
+        headings: [
+          { id: "ast-splitters", text: "Syntax-Aware AST Chunking" },
+          { id: "chromadb-storage", text: "ChromaDB Embedding & Storage" },
+          { id: "semantic-queries", text: "Cross-File Semantic Context" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Whole-Repo ChromaDB Vector Memory</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Contextualizing every audit with surrounding functions, schemas, and dependencies.</p>
+
+          <h2 id="ast-splitters" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Syntax-Aware AST Chunking</h2>
+          <p>
+            Instead of naive character splitters that slice functions in half, CodeAuditAI leverages language-specific recursive splitters (Python, JavaScript, TypeScript, Java, C, C++, Go, Rust, and custom CSS splitters).
+            Chunks respect function and class boundaries.
+          </p>
+
+          <h2 id="chromadb-storage" class="text-lg font-bold text-[#202124] dark:text-white pt-4">ChromaDB Embedding & Storage</h2>
+          <p>Vectors are persisted in <code>app/services/chroma_storage/</code> for instant semantic lookup on subsequent runs without re-embedding.</p>
+        `
+      },
+
+      "sarif-export": {
+        category: "Engine Architecture",
+        title: "OASIS SARIF v2.1.0 Specification",
+        time: "3 min read",
+        headings: [
+          { id: "sarif-overview", text: "Why SARIF?" },
+          { id: "github-security", text: "GitHub Code Scanning Compatibility" },
+          { id: "vscode-integration", text: "VS Code SARIF Viewer" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">OASIS SARIF v2.1.0 Specification</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Static Analysis Results Interchange Format (SARIF) integration guide.</p>
+
+          <h2 id="sarif-overview" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Why SARIF?</h2>
+          <p>
+            SARIF is the international OASIS standard for static analysis tools. By generating valid SARIF v2.1.0 JSON reports, CodeAuditAI integrates natively with GitHub Advanced Security, GitLab Security Dashboard, Azure DevOps, and IDE extensions without custom glue code.
+          </p>
+        `
+      },
+
+      "env-vars": {
+        category: "Configuration & Tuning",
+        title: "Environment Variables",
+        time: "2 min read",
+        headings: [
+          { id: "keys-list", text: "API Keys & Provider Configuration" },
+          { id: "runtime-config", text: "Server & Runtime Settings" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Environment Variables Reference</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">All supported configuration options in <code>.env</code> or environment shell.</p>
+
+          <table class="w-full text-left border-collapse text-xs border border-slate-200 dark:border-google-darkBorder font-mono">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr><th class="p-2 border">Variable</th><th class="p-2 border">Description</th><th class="p-2 border">Default</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="p-2 border text-emerald-600 font-bold">GOOGLE_API_KEY</td><td class="p-2 border font-sans">Google AI Studio API key (free tier)</td><td class="p-2 border">None</td></tr>
+              <tr><td class="p-2 border text-blue-600 font-bold">ANTHROPIC_API_KEY</td><td class="p-2 border font-sans">Anthropic Claude API key</td><td class="p-2 border">None</td></tr>
+              <tr><td class="p-2 border text-purple-600 font-bold">OPENAI_API_KEY</td><td class="p-2 border font-sans">OpenAI / Codex API key</td><td class="p-2 border">None</td></tr>
+              <tr><td class="p-2 border text-amber-600 font-bold">DEEPSEEK_API_KEY</td><td class="p-2 border font-sans">DeepSeek Coder API key</td><td class="p-2 border">None</td></tr>
+              <tr><td class="p-2 border font-bold">LLM_PROVIDER</td><td class="p-2 border font-sans">Active provider (google, claude, openai, deepseek)</td><td class="p-2 border">google</td></tr>
+              <tr><td class="p-2 border font-bold">PRIMARY_MODEL</td><td class="p-2 border font-sans">Model name override</td><td class="p-2 border">gemini-3.5-flash-lite</td></tr>
+            </tbody>
+          </table>
+        `
+      },
+
+      "byok-providers": {
+        category: "Configuration & Tuning",
+        title: "BYOK Provider Setup",
+        time: "4 min read",
+        headings: [
+          { id: "google-setup", text: "Google AI Studio Setup" },
+          { id: "claude-setup", text: "Anthropic Claude Setup" },
+          { id: "openai-setup", text: "OpenAI Setup" },
+          { id: "deepseek-setup", text: "DeepSeek Setup" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">BYOK Provider Setup Guide</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Step-by-step instructions for connecting your preferred AI model provider.</p>
+
+          <h2 id="google-setup" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Google AI Studio (Recommended Free Tier)</h2>
+          <p>Get a free key at <a href="https://aistudio.google.com" target="_blank" class="text-blue-600 underline">aistudio.google.com</a>. Set <code>export GOOGLE_API_KEY="AIzaSy..."</code>.</p>
+
+          <h2 id="claude-setup" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Anthropic Claude</h2>
+          <p>Supports Claude 3.7 Sonnet and Claude 3.5 Sonnet for maximum reasoning precision in security-critical environments.</p>
+        `
+      },
+
+      "quota-routing": {
+        category: "Configuration & Tuning",
+        title: "Quota Protection (429 Prevention)",
+        time: "3 min read",
+        headings: [
+          { id: "the-429-trap", text: "The 9-Hour 429 Sleep Trap" },
+          { id: "failover-chain", text: "Automatic Fallback Chain" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Quota Protection & 429 Prevention</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">How CodeAuditAI prevents thread freezes when upstream APIs exhaust daily quota.</p>
+
+          <h2 id="the-429-trap" class="text-lg font-bold text-[#202124] dark:text-white pt-4">The 9-Hour 429 Sleep Trap</h2>
+          <p>
+            When Google AI Studio exhausts a model's daily quota, it responds with: <code>ResourceExhausted: retry in 33747s</code> (the duration until midnight).
+            Unchecked retry loops will initiate a 9-hour <code>asyncio.sleep()</code>, hanging the server.
+          </p>
+          <p>
+            CodeAuditAI enforces a hard cap: <code>if wait_sec > 15: break</code>. If an API requests hours of waiting, CodeAuditAI aborts the wait immediately and falls back to alternative free models.
+          </p>
+        `
+      },
+
+      "custom-proxies": {
+        category: "Configuration & Tuning",
+        title: "Air-Gapped & Ollama Proxies",
+        time: "3 min read",
+        headings: [
+          { id: "ollama-setup", text: "Connecting to Local Ollama" },
+          { id: "vllm-setup", text: "Connecting to vLLM / LiteLLM" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Air-Gapped & Custom Local Proxies</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Audit code in air-gapped defense or corporate environments with zero cloud egress.</p>
+
+          <h2 id="ollama-setup" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Connecting to Local Ollama</h2>
+          <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700">
+            <div>export OPENAI_BASE_URL="http://localhost:11434/v1"</div>
+            <div>export OPENAI_API_KEY="ollama"</div>
+            <div>codeaudit audit . --provider openai --model codellama</div>
+          </div>
+        `
+      },
+
+      "gitlab-precommit": {
+        category: "CI/CD & Automation",
+        title: "GitLab CI & Pre-commit Hooks",
+        time: "3 min read",
+        headings: [
+          { id: "gitlab-yml", text: "GitLab CI Configuration" },
+          { id: "git-hook", text: "Local Git Pre-Commit Hook" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">GitLab CI & Pre-Commit Hooks</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Prevent vulnerable code from ever being committed or merged.</p>
+
+          <h2 id="git-hook" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Pre-commit Hook (<code>.git/hooks/pre-commit</code>)</h2>
+          <pre class="bg-slate-900 text-slate-100 p-4 rounded-2xl text-xs font-mono overflow-x-auto border border-slate-700"><code>#!/usr/bin/env bash
+echo "🛡️ Running CodeAuditAI Pre-commit Gate..."
+codeaudit audit . --export-sarif .git/audit.sarif
+if [ $? -ne 0 ]; then
+    echo "❌ Code audit detected critical vulnerabilities. Commit rejected."
+    exit 1
+fi</code></pre>
+        `
+      },
+
+      "exit-codes": {
+        category: "CI/CD & Automation",
+        title: "Exit Codes & Automation Logic",
+        time: "2 min read",
+        headings: [
+          { id: "exit-table", text: "Standard Process Exit Codes" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Exit Codes & Automation Logic</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">Standardized exit codes for shell scripting and CI/CD fail-gates.</p>
+
+          <table class="w-full text-left border-collapse text-xs border border-slate-200 dark:border-google-darkBorder font-mono">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr><th class="p-2.5 border">Exit Code</th><th class="p-2.5 border">Status</th><th class="p-2.5 border">Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="p-2.5 border font-bold text-emerald-600">0</td><td class="p-2.5 border">SUCCESS / SAFE</td><td class="p-2.5 border font-sans">Audit completed with no CRITICAL flaws detected.</td></tr>
+              <tr><td class="p-2.5 border font-bold text-amber-600">1</td><td class="p-2.5 border">WARNINGS FOUND</td><td class="p-2.5 border font-sans">Performance bottlenecks or medium-risk patterns identified.</td></tr>
+              <tr><td class="p-2.5 border font-bold text-red-600">2</td><td class="p-2.5 border">CRITICAL EXPLOITS</td><td class="p-2.5 border font-sans">Severe security vulnerabilities (SQLi, buffer overflow, hardcoded secrets) detected.</td></tr>
+            </tbody>
+          </table>
+        `
+      },
+
+      faq: {
+        category: "Resources",
+        title: "FAQ",
+        time: "3 min read",
+        headings: [
+          { id: "faq-free", text: "Is CodeAuditAI really free?" },
+          { id: "faq-privacy", text: "Is my code sent to third parties?" },
+          { id: "faq-large-repo", text: "How does it handle massive repositories?" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Frequently Asked Questions</h1>
+          
+          <h2 id="faq-free" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Is CodeAuditAI really free?</h2>
+          <p>Yes. CodeAuditAI is 100% open-source under the MIT License. When paired with Google AI Studio's <code>gemini-3.5-flash-lite</code>, you receive 500 audits per day at zero cost.</p>
+
+          <h2 id="faq-privacy" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Is my code sent to third parties?</h2>
+          <p>Only the specific LLM API you configure (Google, Anthropic, or OpenAI) receives the audited code chunks. If you connect local models via Ollama or vLLM, code never leaves your local machine.</p>
+
+          <h2 id="faq-large-repo" class="text-lg font-bold text-[#202124] dark:text-white pt-4">How does it handle massive repositories?</h2>
+          <p>CodeAuditAI maps the repo AST and audits High-importance modules first. ChromaDB vector indexing caches chunks so only modified files are analyzed on subsequent runs.</p>
+        `
+      },
+
+      troubleshooting: {
+        category: "Resources",
+        title: "Troubleshooting Guide",
+        time: "3 min read",
+        headings: [
+          { id: "err-429", text: "Error 429: Resource Exhausted" },
+          { id: "err-path", text: "No files found for repo path" },
+          { id: "err-symlink", text: "codeaudit command not found" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Troubleshooting Guide</h1>
+
+          <h2 id="err-429" class="text-lg font-bold text-[#202124] dark:text-white pt-4">Error 429: Resource Exhausted</h2>
+          <p>Ensure you are using <code>gemini-3.5-flash-lite</code> (500 requests/day) instead of <code>gemini-2.5-flash</code> (20 requests/day). Switch models via the Web Studio BYOK modal or <code>export PRIMARY_MODEL="gemini-3.5-flash-lite"</code>.</p>
+
+          <h2 id="err-path" class="text-lg font-bold text-[#202124] dark:text-white pt-4">No files found for repository path</h2>
+          <p>Ensure you provide an absolute path or valid GitHub URL. Relative paths are automatically resolved to <code>os.path.abspath</code>.</p>
+
+          <h2 id="err-symlink" class="text-lg font-bold text-[#202124] dark:text-white pt-4">command not found: codeaudit</h2>
+          <p>Ensure <code>~/.local/bin</code> is in your system <code>PATH</code>, or execute the root launcher directly: <code>./codeaudit web</code>.</p>
+        `
+      }
+    };
+
+
+    // Document Keys Array for Prev/Next Navigation
+    const DOC_KEYS = Object.keys(DOCS_DATA);
+    let currentDocKey = 'overview';
+
+    // Initialize Documentation Portal
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      const hash = window.location.hash.replace('#', '') || 'overview';
+      loadDoc(DOCS_DATA[hash] ? hash : 'overview');
+      setupSearchShortcuts();
+    });
+
+    // Theme Management
+    function initTheme() {
+      const saved = localStorage.getItem('codeaudit_theme') || 'light';
+      if (saved === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.getElementById('theme-icon').className = 'fa-solid fa-moon';
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        localStorage.setItem('codeaudit_theme', 'light');
+        document.getElementById('theme-icon').className = 'fa-solid fa-moon';
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        localStorage.setItem('codeaudit_theme', 'dark');
+        document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+      }
+    }
+
+    // Mobile Sidebar Toggle
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('docs-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      sidebar.classList.toggle('-translate-x-full');
+      backdrop.classList.toggle('hidden');
+    }
+
+    // Load Specific Document Article
+    function loadDoc(key) {
+      const doc = DOCS_DATA[key] || DOCS_DATA.overview;
+      currentDocKey = key;
+      window.location.hash = key;
+
+      // Update Sidebar Active Class
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${key}`) {
+          link.classList.add('active');
+        }
+      });
+
+      // Update Breadcrumbs & Meta
+      document.getElementById('doc-breadcrumb-category').innerText = doc.category;
+      document.getElementById('doc-breadcrumb-title').innerText = doc.title;
+      document.getElementById('doc-reading-time').innerText = doc.time;
+
+      // Update Article Content
+      document.getElementById('doc-article-container').innerHTML = doc.content;
+      Prism.highlightAll();
+
+      // Update "On This Page" Right Sidebar
+      const onThisPageNav = document.getElementById('on-this-page-nav');
+      onThisPageNav.innerHTML = '';
+      if (doc.headings && doc.headings.length > 0) {
+        doc.headings.forEach(h => {
+          const a = document.createElement('a');
+          a.href = `#${h.id}`;
+          a.className = 'block text-slate-600 dark:text-slate-400 hover:text-blue-600 py-1 transition truncate';
+          a.innerText = h.text;
+          onThisPageNav.appendChild(a);
+        });
+      }
+
+      // Update Prev / Next Buttons
+      const idx = DOC_KEYS.indexOf(key);
+      const prevKey = idx > 0 ? DOC_KEYS[idx - 1] : null;
+      const nextKey = idx < DOC_KEYS.length - 1 ? DOC_KEYS[idx + 1] : null;
+
+      const btnPrev = document.getElementById('btn-prev-doc');
+      const btnNext = document.getElementById('btn-next-doc');
+
+      if (prevKey) {
+        btnPrev.classList.remove('opacity-30', 'pointer-events-none');
+        document.getElementById('label-prev-doc').innerText = DOCS_DATA[prevKey].title;
+      } else {
+        btnPrev.classList.add('opacity-30', 'pointer-events-none');
+        document.getElementById('label-prev-doc').innerText = 'Start';
+      }
+
+      if (nextKey) {
+        btnNext.classList.remove('opacity-30', 'pointer-events-none');
+        document.getElementById('label-next-doc').innerText = DOCS_DATA[nextKey].title;
+      } else {
+        btnNext.classList.add('opacity-30', 'pointer-events-none');
+        document.getElementById('label-next-doc').innerText = 'End';
+      }
+
+      // Close mobile sidebar if open
+      const sidebar = document.getElementById('docs-sidebar');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+        toggleMobileSidebar();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function navPrevDoc() {
+      const idx = DOC_KEYS.indexOf(currentDocKey);
+      if (idx > 0) loadDoc(DOC_KEYS[idx - 1]);
+    }
+
+    function navNextDoc() {
+      const idx = DOC_KEYS.indexOf(currentDocKey);
+      if (idx < DOC_KEYS.length - 1) loadDoc(DOC_KEYS[idx + 1]);
+    }
+
+    function copyDocContent() {
+      const text = document.getElementById('doc-article-container').innerText;
+      navigator.clipboard.writeText(text);
+      showToast('Page content copied to clipboard!');
+    }
+
+    // Search Dialog & Keyboard Shortcuts
+    function openSearchModal() {
+      document.getElementById('search-modal').classList.remove('hidden');
+      const input = document.getElementById('search-input');
+      input.value = '';
+      input.focus();
+      handleSearch('');
+    }
+
+    function closeSearchModal() {
+      document.getElementById('search-modal').classList.add('hidden');
+    }
+
+    function setupSearchShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          openSearchModal();
+        }
+        if (e.key === 'Escape') {
+          closeSearchModal();
+        }
+      });
+    }
+
+    function handleSearch(query) {
+      const q = query.toLowerCase().trim();
+      const resultsContainer = document.getElementById('search-results');
+      resultsContainer.innerHTML = '';
+
+      if (!q) {
+        resultsContainer.innerHTML = '<div class="p-4 text-center text-slate-400">Type any command, flag, or architectural concept...</div>';
+        return;
+      }
+
+      let matches = 0;
+      for (const [key, doc] of Object.entries(DOCS_DATA)) {
+        if (doc.title.toLowerCase().includes(q) || doc.category.toLowerCase().includes(q) || doc.content.toLowerCase().includes(q)) {
+          matches++;
+          const item = document.createElement('div');
+          item.className = 'p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition flex items-center justify-between group';
+          item.onclick = () => {
+            loadDoc(key);
+            closeSearchModal();
+          };
+          item.innerHTML = `
+            <div>
+              <div class="text-[10px] uppercase font-bold text-google-greyText dark:text-slate-400">${doc.category}</div>
+              <div class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600">${doc.title}</div>
+            </div>
+            <i class="fa-solid fa-arrow-right text-slate-400 group-hover:text-blue-600 text-xs"></i>
+          `;
+          resultsContainer.appendChild(item);
+        }
+      }
+
+      if (matches === 0) {
+        resultsContainer.innerHTML = '<div class="p-6 text-center text-slate-400">No matching articles found. Try another query.</div>';
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

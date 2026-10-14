@@ -65,8 +65,6 @@ def find_repo_root(file_path: str) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/studio", response_class=HTMLResponse)
-@app.get("/cli", response_class=HTMLResponse)
-@app.get("/docs", response_class=HTMLResponse)
 @app.get("/landing", response_class=HTMLResponse)
 def read_studio():
     """
@@ -78,6 +76,26 @@ def read_studio():
             return HTMLResponse(content=f.read())
     return HTMLResponse(
         content="<h1>CodeAuditAI Studio</h1><p>Web studio index.html not found. Place it in app/static/index.html</p>",
+        status_code=404
+    )
+
+
+@app.get("/cli", response_class=HTMLResponse)
+@app.get("/docs", response_class=HTMLResponse)
+def read_docs():
+    """
+    Serves the dedicated CodeAuditAI Developer CLI Documentation Portal.
+    """
+    docs_html_path = os.path.join(STATIC_DIR, "docs.html")
+    if os.path.exists(docs_html_path):
+        with open(docs_html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    index_html_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_html_path):
+        with open(index_html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(
+        content="<h1>Documentation Not Found</h1>",
         status_code=404
     )
 

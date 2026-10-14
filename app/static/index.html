@@ -123,9 +123,9 @@
         <button onclick="switchView('studio')" id="nav-btn-studio" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard">
           <i class="fa-solid fa-cubes-stacked mr-1.5 text-blue-600"></i>Audit Studio
         </button>
-        <button onclick="switchView('cli-docs')" id="nav-btn-cli-docs" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard">
-          <i class="fa-solid fa-terminal mr-1.5 text-emerald-600"></i>CLI Docs
-        </button>
+        <a href="/docs" id="nav-btn-cli-docs" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard flex items-center">
+          <i class="fa-solid fa-terminal mr-1.5 text-emerald-600"></i><span>CLI Docs</span>
+        </a>
         <button onclick="switchView('snippet')" id="nav-btn-snippet" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard">
           <i class="fa-solid fa-code mr-1.5 text-amber-500"></i>Sandbox
         </button>
@@ -193,10 +193,10 @@
             <i class="fa-solid fa-cubes-stacked w-4 text-blue-600"></i>
             <span>Audit Studio</span>
           </button>
-          <button onclick="switchView('cli-docs')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <a href="/docs" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
             <i class="fa-solid fa-terminal w-4 text-emerald-600"></i>
             <span>CLI Docs & Setup</span>
-          </button>
+          </a>
           <button onclick="switchView('snippet')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
             <i class="fa-solid fa-code w-4 text-amber-500"></i>
             <span>Snippet Sandbox</span>
@@ -262,10 +262,10 @@
             <span>Launch Audit Studio</span>
           </button>
           
-          <button onclick="switchView('cli-docs')" class="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white dark:bg-google-darkCard hover:bg-slate-50 dark:hover:bg-slate-800 border border-google-greyBorder dark:border-google-darkBorder text-[#202124] dark:text-white font-semibold text-xs sm:text-sm transition flex items-center space-x-2 shadow-sm">
+          <a href="/docs" class="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white dark:bg-google-darkCard hover:bg-slate-50 dark:hover:bg-slate-800 border border-google-greyBorder dark:border-google-darkBorder text-[#202124] dark:text-white font-semibold text-xs sm:text-sm transition flex items-center space-x-2 shadow-sm">
             <i class="fa-solid fa-terminal text-emerald-600"></i>
             <span>CLI Docs & Downloads</span>
-          </button>
+          </a>
 
           <button onclick="scrollToLiveDemo()" class="px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-google-greyText dark:text-slate-300 hover:text-blue-600 font-semibold text-xs sm:text-sm transition flex items-center space-x-1.5">
             <span>Instant Demo</span>
@@ -470,9 +470,9 @@
           <button onclick="switchView('studio')" class="px-6 py-2.5 sm:py-3 rounded-full bg-white text-blue-600 font-bold text-xs hover:bg-slate-100 transition shadow-lg">
             Open Web Review Studio
           </button>
-          <button onclick="switchView('cli-docs')" class="px-6 py-2.5 sm:py-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/30 font-semibold text-xs transition">
+          <a href="/docs" class="px-6 py-2.5 sm:py-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/30 font-semibold text-xs transition">
             View CLI Installation Guide
-          </button>
+          </a>
         </div>
       </section>
 

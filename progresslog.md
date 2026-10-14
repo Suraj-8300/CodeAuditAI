@@ -426,7 +426,39 @@ Created a standalone Python app containing 3 intentional flaws:
 
 ---
 
+## Session 9 — 2026-10-15 | Dedicated Documentation Portal (`/docs` & `docs.html`) Patterned After Gemini CLI
+
+### 🎯 Objectives
+- Provide a dedicated, full-page developer documentation experience patterned after `geminicli.com/docs`.
+- Eliminate the compromise of embedding docs inside a landing page hero with awkward scroll anchors.
+- Build a multi-category hierarchical navigation tree, active article view, right-sidebar "On this page" TOC, and interactive `Ctrl+K` search modal.
+
+---
+
+### ✅ Changes & Features Implemented
+1. **Dedicated Documentation Portal (`app/static/docs.html`)**:
+   - **3-Column Layout**: Left nested category tree (Get Started, Using CodeAudit CLI, Engine Architecture, Configuration, CI/CD, Resources), center main article reader, and right "On this page" subheading navigator.
+   - **Full Technical Article Library**: Complete deep documentation for every command (`web`, `audit`, `snippet`, `languages`, `projects`), LangGraph Tri-Agent consensus pipeline, ChromaDB vector memory, SARIF v2.1.0 specifications, 500 RPD Google AI Studio quota rules, and GitHub Actions CI/CD workflows.
+   - **Interactive Search (`Ctrl+K`)**: Modal dialog allowing instantaneous keyword filtering across all documentation topics and headings with keyboard shortcuts.
+   - **Article Meta & Productivity**: Reading time estimation, 1-click "Copy Page" button, previous/next article pagination, and smooth anchor scrolling.
+2. **Dedicated FastAPI Route (`app/main.py`)**:
+   - Added `read_docs()` handler serving `app/static/docs.html` on `GET /docs` and `GET /cli`.
+   - Main web studio retains `GET /`, `GET /studio`, and `GET /landing`.
+3. **Web Studio Navigation Sync (`app/static/index.html`)**:
+   - Connected desktop navbar, mobile drawer, and hero CTA buttons directly to `/docs`.
+
+---
+
+### 🧪 Verification
+- [x] Verified `/docs` and `/cli` route responses with standalone HTML rendering.
+- [x] Verified left sidebar category navigation, active states, and hash routing.
+- [x] Verified `Ctrl+K` search modal filtering and keyboard accessibility.
+- [x] Verified light and dark mode synchronization via local storage.
+
+---
+
 *Last updated: 2026-10-15*
+
 
 
 
