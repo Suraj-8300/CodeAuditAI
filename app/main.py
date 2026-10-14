@@ -29,7 +29,9 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app = FastAPI(
     title="CodeAuditAI Studio & API",
     description="Unified multi-agent asynchronous review studio and engine for intelligent codebase audits.",
-    version="1.2.0"
+    version="1.2.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
 )
 
 if os.path.exists(STATIC_DIR):

@@ -70,6 +70,27 @@ def cmd_web(args):
     uvicorn.run("app.main:app", host=host, port=port, reload=args.reload)
 
 
+def cmd_docs(args):
+    """Launches the dedicated CodeAuditAI Documentation Portal."""
+    import uvicorn
+    host = args.host
+    port = args.port
+
+    url = f"http://{host}:{port}/docs"
+    _print(f"\n📖 [bold green]Starting CodeAuditAI Documentation Portal...[/bold green]")
+    _print(f"📡 Docs URL: [bold cyan]{url}[/bold cyan]\n")
+
+    if not args.no_browser:
+        def open_browser():
+            import time
+            time.sleep(1.2)
+            webbrowser.open(url)
+        import threading
+        threading.Thread(target=open_browser, daemon=True).start()
+
+    uvicorn.run("app.main:app", host=host, port=port, reload=False)
+
+
 async def _run_audit_pipeline(target: str, high_only: bool = True, output_md: Optional[str] = None, output_sarif: Optional[str] = None):
     sqlite_service = SQLiteStorageService()
     vector_service = VectorStorageService()
@@ -343,10 +364,18 @@ def main():
     projects_parser = subparsers.add_parser("projects", help="List and manage indexed repositories/projects")
     projects_parser.add_argument("--delete", "-d", help="Delete a project and its cached audits by path")
 
+    # 6. docs
+    docs_parser = subparsers.add_parser("docs", help="Open the dedicated CLI & Architecture Documentation Portal")
+    docs_parser.add_argument("--host", default="127.0.0.1", help="Host interface (default: 127.0.0.1)")
+    docs_parser.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
+    docs_parser.add_argument("--no-browser", action="store_true", help="Do not automatically open browser")
+
     args = parser.parse_args()
 
     if args.command == "web":
         cmd_web(args)
+    elif args.command == "docs":
+        cmd_docs(args)
     elif args.command == "audit":
         cmd_audit(args)
     elif args.command == "snippet":

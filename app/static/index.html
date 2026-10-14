@@ -1097,7 +1097,7 @@ jobs:
       const path = window.location.pathname;
       const hash = window.location.hash;
       if (path === '/studio' || hash === '#studio') switchView('studio');
-      else if (path === '/cli' || path === '/docs' || hash === '#cli-docs') switchView('cli-docs');
+      else if (hash === '#cli-docs' || hash === '#docs') window.location.href = '/docs';
       else switchView('landing');
     });
 
