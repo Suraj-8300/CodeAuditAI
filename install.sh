@@ -27,7 +27,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git -C "$INSTALL_DIR" pull || true
 else
     echo "📥 Cloning CodeAuditAI into $INSTALL_DIR..."
-    git clone https://github.com/Suraj-8300/ai-code-auditor.git "$INSTALL_DIR"
+    git clone https://github.com/Suraj-8300/CodeAuditAI.git "$INSTALL_DIR"
 fi
 
 cd "$INSTALL_DIR"

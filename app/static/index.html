@@ -137,7 +137,7 @@
         </button>
 
         <!-- GitHub Repo Button -->
-        <a href="https://github.com/Suraj-8300/ai-code-auditor" target="_blank" class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202124] text-white hover:bg-black transition font-medium">
+        <a href="https://github.com/Suraj-8300/CodeAuditAI" target="_blank" class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202124] text-white hover:bg-black transition font-medium">
           <i class="fa-brands fa-github text-sm"></i>
           <span>GitHub</span>
         </a>
@@ -688,14 +688,14 @@
             <div class="space-y-4">
               <h3 class="font-bold text-slate-800 dark:text-slate-200">Option A: 1-Line Automatic Installer (Recommended)</h3>
               <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 flex items-center justify-between border border-slate-700">
-                <span class="truncate">curl -sSL https://raw.githubusercontent.com/Suraj-8300/ai-code-auditor/main/install.sh | bash</span>
-                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/ai-code-auditor/main/install.sh | bash'); showToast('Copied curl install command!');" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-lg ml-2 font-sans font-semibold">Copy</button>
+                <span class="truncate">curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash</span>
+                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash'); showToast('Copied curl install command!');" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-lg ml-2 font-sans font-semibold">Copy</button>
               </div>
 
               <h3 class="font-bold text-slate-800 dark:text-slate-200 pt-2">Option B: Git Clone & Editable Install</h3>
               <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700">
-                <div class="text-slate-400">git clone https://github.com/Suraj-8300/ai-code-auditor.git</div>
-                <div class="text-slate-400">cd ai-code-auditor</div>
+                <div class="text-slate-400">git clone https://github.com/Suraj-8300/CodeAuditAI.git</div>
+                <div class="text-slate-400">cd CodeAuditAI</div>
                 <div class="text-slate-400">python3 -m venv .venv && source .venv/bin/activate</div>
                 <div class="text-emerald-400 font-bold">pip install -r requirements.txt && pip install -e .</div>
               </div>
@@ -810,7 +810,7 @@ jobs:
           python-version: "3.11"
       - name: Install CodeAuditAI
         run: |
-          pip install git+https://github.com/Suraj-8300/ai-code-auditor.git
+          pip install git+https://github.com/Suraj-8300/CodeAuditAI.git
       - name: Run Audit
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
@@ -1070,7 +1070,7 @@ jobs:
     }
 
     function copyInstallCmd() {
-      navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/ai-code-auditor/main/install.sh | bash');
+      navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash');
       showToast('Install command copied to clipboard!');
     }
 

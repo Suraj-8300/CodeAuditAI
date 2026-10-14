@@ -48,14 +48,14 @@ Engineering teams face a fundamental dilemma when reviewing modern codebases:
 Install CodeAuditAI, create an isolated virtual environment, and symlink the `codeaudit` binary to your path in a single command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Suraj-8300/ai-code-auditor/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash
 ```
 
 ### 2. Manual Git Clone
 
 ```bash
-git clone https://github.com/Suraj-8300/ai-code-auditor.git
-cd ai-code-auditor
+git clone https://github.com/Suraj-8300/CodeAuditAI.git
+cd CodeAuditAI
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -313,7 +313,7 @@ jobs:
       - name: Install CodeAuditAI
         run: |
           pip install --upgrade pip
-          pip install git+https://github.com/Suraj-8300/ai-code-auditor.git
+          pip install git+https://github.com/Suraj-8300/CodeAuditAI.git
 
       - name: Run Multi-Agent Audit
         env:
@@ -368,7 +368,7 @@ The FastAPI server provides a RESTful API:
 ## 📂 Project Structure
 
 ```
-ai-code-auditor/
+CodeAuditAI/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py                          # FastAPI application & Web Studio routes
