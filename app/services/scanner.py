@@ -1,7 +1,8 @@
 import os
 import asyncio
+from pathlib import Path
 from pydantic import BaseModel
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Set
 
 # 1. The Data Contract
 class FileMetadata(BaseModel):
@@ -17,37 +18,65 @@ EXCLUDED_EXTS = {".pyc", ".exe", ".dll", ".so", ".o", ".class", ".zip", ".tar", 
 async def scan_directory(root_path: str) -> AsyncGenerator[FileMetadata, None]:
     """
     Asynchronously walks a directory tree without blocking the main event loop.
-    Yields FileMetadata objects for valid files.
+    Enforces strict canonical boundary containment, disables symlink following,
+    and tracks visited paths to prevent symlink cycle resource exhaustion.
     """
-    # We use a queue-based approach instead of recursion to prevent call-stack depth limits
-    # and to easily yield control back to the asyncio event loop.
-    queue = [root_path]
+    try:
+        resolved_root = Path(root_path).resolve(strict=True)
+    except (FileNotFoundError, RuntimeError, OSError):
+        return
+
+    visited_paths: Set[str] = {str(resolved_root)}
+    queue = [resolved_root]
     
     while queue:
         current_dir = queue.pop(0)
         
         try:
             # Offload the blocking disk I/O (directory reading) to a separate thread
-            # os.scandir is highly optimized for performance compared to os.walk
-            entries = await asyncio.to_thread(lambda d: list(os.scandir(d)), current_dir)
-        except (PermissionError, FileNotFoundError):
+            entries = await asyncio.to_thread(lambda d: list(os.scandir(str(d))), current_dir)
+        except (PermissionError, FileNotFoundError, OSError):
             continue
 
         for entry in entries:
-            if entry.is_dir():
-                # Apply our exclusion filter for directories
+            try:
+                # Do not follow symlinks to avoid directory traversal and infinite recursion
+                is_directory = entry.is_dir(follow_symlinks=False)
+                is_file = entry.is_file(follow_symlinks=False)
+            except OSError:
+                continue
+
+            entry_path = Path(entry.path)
+
+            # Strict boundary validation: verify containment inside resolved_root
+            try:
+                canonical_entry = entry_path.resolve(strict=False)
+                if not canonical_entry.is_relative_to(resolved_root):
+                    continue
+            except (ValueError, RuntimeError, OSError):
+                continue
+
+            if is_directory:
+                # Apply exclusion filter for directories
                 if entry.name not in EXCLUDED_DIRS and not entry.name.startswith('.'):
-                    queue.append(entry.path)
+                    real_str = str(canonical_entry)
+                    if real_str not in visited_paths:
+                        visited_paths.add(real_str)
+                        queue.append(entry_path)
                     
-            elif entry.is_file():
+            elif is_file:
                 ext = os.path.splitext(entry.name)[1].lower()
                 
-                # Apply our exclusion filter for file types
+                # Apply exclusion filter for file types
                 if ext not in EXCLUDED_EXTS:
+                    try:
+                        file_size = entry.stat(follow_symlinks=False).st_size
+                    except OSError:
+                        file_size = 0
                     yield FileMetadata(
-                        file_path=entry.path,
+                        file_path=str(entry_path),
                         extension=ext,
-                        size_bytes=entry.stat().st_size
+                        size_bytes=file_size
                     )
         
         # Explicitly yield control back to the event loop after processing a directory

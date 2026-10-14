@@ -32,13 +32,17 @@ class RepositoryMapperService:
         self.sqlite = sqlite_service
         self.vector_db = vector_service
 
-    def _calculate_md5(self, file_path: str) -> str:
-        """Computes MD5 hash of a file to check for content modifications."""
-        hasher = hashlib.md5()
+    def _calculate_sha256(self, file_path: str) -> str:
+        """Computes SHA-256 hash of a file to check for content modifications (CWE-328)."""
+        hasher = hashlib.sha256()
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
+
+    def _calculate_md5(self, file_path: str) -> str:
+        """Backward-compatible alias routing to SHA-256 for collision resistance."""
+        return self._calculate_sha256(file_path)
 
     def _should_ignore(self, file_path: str, repo_root: str) -> bool:
         """Determines if a file should be ignored during repo scan."""
@@ -136,7 +140,14 @@ class RepositoryMapperService:
         # 1. Walk filesystem in thread pool to prevent event loop starvation (CWE-89)
         def _scan_filesystem():
             files_collected = []
-            for root, dirs, files in os.walk(repo_path):
+            for root, dirs, files in os.walk(repo_path, followlinks=False):
+                # Ensure canonical containment within repo_path (CWE-59)
+                try:
+                    canonical_root = os.path.realpath(root)
+                    if not canonical_root.startswith(repo_path):
+                        continue
+                except OSError:
+                    continue
                 dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
                 for file in files:
                     full_path = os.path.join(root, file)
@@ -157,7 +168,7 @@ class RepositoryMapperService:
             rel_path = os.path.relpath(file_path, repo_path)
             active_paths.add(file_path)
             
-            curr_hash = self._calculate_md5(file_path)
+            curr_hash = self._calculate_sha256(file_path)
             cached = cached_files_map.get(file_path)
             
             if cached and cached["hash"] == curr_hash:

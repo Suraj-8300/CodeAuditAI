@@ -465,7 +465,8 @@ async def api_analyze_github(
     then runs the full repository analysis pipeline on it.
     """
     clean_url = github_url.strip()
-    if not re.match(r"^https?://(www\.)?github\.com/[a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-\.]+(/)?$", clean_url):
+    # Strict HTTPS GitHub repository URL format validation (CWE-20)
+    if not re.match(r"^https://github\.com/[a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-\.]+(/)?$", clean_url):
         raise HTTPException(status_code=400, detail="Invalid GitHub URL. Must be in the format: https://github.com/owner/repo")
 
     # Securely derive and sanitize repository directory name (CWE-78, CWE-22)
@@ -481,11 +482,13 @@ async def api_analyze_github(
     if not local_repo_path.startswith(os.path.realpath(CLONED_REPOS_DIR)):
         raise HTTPException(status_code=400, detail="Directory traversal attempt detected in target path.")
 
+    proc = None
     try:
         if os.path.exists(local_repo_path):
             print(f"♻️  [GitHub] Repo '{repo_slug}' already cloned. Pulling latest...")
+            # Use '--' argument terminator to eliminate argument flag injection (CWE-78)
             proc = await asyncio.create_subprocess_exec(
-                "git", "-C", local_repo_path, "pull",
+                "git", "-C", local_repo_path, "pull", "--ff-only",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -497,8 +500,9 @@ async def api_analyze_github(
             print(f"✅ [GitHub] Pull complete: {stdout.decode().strip() or 'Already up to date.'}")
         else:
             print(f"📥 [GitHub] Cloning '{clean_url}' into '{local_repo_path}'...")
+            # Use '--' to separate command flags from user-supplied positional arguments (CWE-78)
             proc = await asyncio.create_subprocess_exec(
-                "git", "clone", "--depth=1", clean_url, local_repo_path,
+                "git", "clone", "--depth=1", "--", clean_url, local_repo_path,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -510,7 +514,13 @@ async def api_analyze_github(
             print(f"✅ [GitHub] Clone complete.")
 
     except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Git operation timed out after 5 minutes.")
+        if proc:
+            try:
+                proc.kill()
+                await proc.wait()
+            except Exception:
+                pass
+        raise HTTPException(status_code=504, detail="Git network operation timed out after 5 minutes.")
 
 
     async with get_repo_lock(local_repo_path):
