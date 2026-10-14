@@ -20,30 +20,45 @@ def process_user_data(user_input):
     return True
 """
 
-    # 2. Define the initial input matching our AuditState dictionary schema
+    # Mock repository map to test context awareness
+    mock_repo_map = (
+        "Repository: sandbox_app\n"
+        "Location: /home/suraj/sandbox\n\n"
+        "Files List:\n"
+        "- main.py | Importance: High | Role: Core entry point for user requests\n"
+        "- database.py | Importance: High | Role: Direct database connector and driver\n"
+        "- sandbox_test.py | Importance: Medium | Role: User data processing logic\n"
+    )
+
+    # 2. Define the initial input matching our updated AuditState dictionary schema
     initial_scorecard = {
         "file_path": "sandbox_test.py",
         "source_code": mock_bad_code,
-        "retrieved_context": [],
+        "repo_path": "/home/suraj/sandbox",
+        "repo_map": mock_repo_map,
+        "retrieved_context": [
+            "Context: The application does not use parameterized queries in db.execute in database.py."
+        ],
+        "security_draft": "",
+        "performance_draft": "",
         "security_report": "",
-        "performance_report": "",
-        "final_compiled_review": ""
+        "performance_report": ""
     }
 
-    print("🚀 Invoking LangGraph engine (calling Gemini asynchronously)...")
+    print("🚀 Invoking LangGraph engine (calling Gemini asynchronously with parallel agents)...")
     
     # 3. Fire off the workflow execution graph
     final_output_state = await audit_agent_app.ainvoke(initial_scorecard)
     
-    print("\n🏁 Workflow execution complete! Inspecting the final scorecard:\n")
+    print("\n🏁 Workflow execution complete! Inspecting the final reconciled reports:\n")
     print("==================================================================")
-    print("🛡️ SECURITY AGENT REPORT:")
+    print("🛡️ RECONCILED SECURITY REPORT:")
     print("==================================================================")
-    print(final_output_state["security_report"])
+    print(final_output_state.get("security_report"))
     print("\n==================================================================")
-    print("⚡ PERFORMANCE AGENT REPORT:")
+    print("⚡ RECONCILED PERFORMANCE REPORT:")
     print("==================================================================")
-    print(final_output_state["performance_report"])
+    print(final_output_state.get("performance_report"))
     print("==================================================================")
 
 if __name__ == "__main__":

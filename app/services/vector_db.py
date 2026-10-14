@@ -1,8 +1,63 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import chromadb
 from chromadb.utils import embedding_functions
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
+
+# CSS-family extensions (no LangChain Language enum exists for CSS)
+CSS_EXTENSIONS = {".css", ".scss", ".sass", ".less"}
+
+# Map of common file extensions to LangChain splitters
+EXTENSION_TO_LANGUAGE = {
+    # Python
+    ".py": Language.PYTHON,
+    # JavaScript / TypeScript
+    ".js": Language.JS,
+    ".jsx": Language.JS,
+    ".mjs": Language.JS,
+    ".cjs": Language.JS,
+    ".ts": Language.TS,
+    ".tsx": Language.TS,
+    # Go
+    ".go": Language.GO,
+    # C / C++
+    ".cpp": Language.CPP,
+    ".cc": Language.CPP,
+    ".cxx": Language.CPP,
+    ".h": Language.CPP,
+    ".hpp": Language.CPP,
+    ".c": Language.C,
+    # Java / Kotlin
+    ".java": Language.JAVA,
+    ".kt": Language.KOTLIN,
+    ".kts": Language.KOTLIN,
+    # Rust
+    ".rs": Language.RUST,
+    # PHP
+    ".php": Language.PHP,
+    # HTML
+    ".html": Language.HTML,
+    ".htm": Language.HTML,
+    # Markdown
+    ".md": Language.MARKDOWN,
+    ".mdx": Language.MARKDOWN,
+    # Swift
+    ".swift": Language.SWIFT,
+    # C# 
+    ".cs": Language.CSHARP,
+    # Ruby
+    ".rb": Language.RUBY,
+    # Lua
+    ".lua": Language.LUA,
+    # Perl
+    ".pl": Language.PERL,
+    ".pm": Language.PERL,
+    # R
+    ".r": Language.R,
+    ".R": Language.R,
+    # Scala
+    ".scala": Language.SCALA,
+}
 
 class VectorStorageService:
     def __init__(self, storage_path: str = "./app/services/chroma_storage"):
@@ -13,6 +68,9 @@ class VectorStorageService:
         os.makedirs(storage_path, exist_ok=True)
         
         self.client = chromadb.PersistentClient(path=storage_path)
+        
+        # Uses standard local sentence-transformers (all-MiniLM-L6-v2) under the hood,
+        # running entirely on the user's local machine without external API token costs.
         self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
         
         # Initialize our production collection
@@ -20,53 +78,102 @@ class VectorStorageService:
             name="codebase_vault",
             embedding_function=self.embedding_fn
         )
-        
-        # Configure our standard Python splitter
-        self.splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.PYTHON,
-            chunk_size=500,
-            chunk_overlap=50
-        )
 
-    def index_file(self, file_path: str) -> int:
+    def _get_splitter_for_file(self, file_path: str) -> RecursiveCharacterTextSplitter:
         """
-        Reads a local file, splits it into language-aware chunks, and commits it to the database.
+        Detects file extension and returns a syntax-aware splitter,
+        or a default splitter if the language is unsupported.
+        """
+        _, ext = os.path.splitext(file_path)
+        ext_lower = ext.lower()
+        lang = EXTENSION_TO_LANGUAGE.get(ext_lower)
+
+        if lang:
+            return RecursiveCharacterTextSplitter.from_language(
+                language=lang,
+                chunk_size=700,  # Increased slightly to accommodate contextual header
+                chunk_overlap=70
+            )
+        elif ext_lower in CSS_EXTENSIONS:
+            # CSS/SCSS/SASS/LESS — custom rule-block-aware splitter
+            return RecursiveCharacterTextSplitter(
+                chunk_size=700,
+                chunk_overlap=70,
+                separators=["}", "\n\n", "\n", " ", ""]
+            )
+        else:
+            # Generic plain-text/config files splitter
+            return RecursiveCharacterTextSplitter(
+                chunk_size=700,
+                chunk_overlap=70,
+                separators=["\n\n", "\n", " ", ""]
+            )
+
+    def index_file(self, file_path: str, file_role: str = "") -> int:
+        """
+        Reads a local file, splits it into syntax-aware chunks, enriches each chunk
+        with contextual metadata headers (Contextual Chunking), and indexes into ChromaDB.
         Returns the number of indexed chunks.
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Target file not found: {file_path}")
             
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             source_code = f.read()
             
-        chunks = self.splitter.split_text(source_code)
-        if not chunks:
+        splitter = self._get_splitter_for_file(file_path)
+        raw_chunks = splitter.split_text(source_code)
+        if not raw_chunks:
             return 0
             
+        # Contextual Enrichment: prepending file name & role/summary to each chunk
+        # This keeps critical high-level context attached to the chunk inside the vector space.
+        enriched_chunks = []
+        filename = os.path.basename(file_path)
+        role_info = f" | Role: {file_role}" if file_role else ""
+        
+        for chunk in raw_chunks:
+            header = f"[File: {filename}{role_info}]\n---\n"
+            enriched_chunks.append(header + chunk)
+            
         # Generate unique structured tracking keys
-        chunk_ids = [f"{file_path}_chunk_{i}" for i in range(len(chunks))]
-        metadatas = [{"source_file": file_path} for _ in range(len(chunks))]
+        chunk_ids = [f"{file_path}_chunk_{i}" for i in range(len(enriched_chunks))]
+        metadatas = [{"source_file": file_path} for _ in range(len(enriched_chunks))]
         
         # Commit directly to our collection
         self.collection.add(
-            documents=chunks,
+            documents=enriched_chunks,
             ids=chunk_ids,
             metadatas=metadatas
         )
-        return len(chunks)
+        return len(enriched_chunks)
 
-    def semantic_search(self, query: str, limit: int = 2) -> List[Dict[str, Any]]:
+    def delete_file_index(self, file_path: str):
+        """
+        Removes all indexed chunks associated with a specific file path.
+        """
+        try:
+            self.collection.delete(where={"source_file": file_path})
+        except Exception as e:
+            # Collection might be empty or key missing; fail gracefully
+            print(f"⚠️ Warning: failed to delete index for {file_path}: {e}")
+
+    def semantic_search(self, query: str, limit: int = 2, filter_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Queries the vector space and returns the closest matching code structural segments.
+        Optionally filters results to a specific file.
         """
+        where_clause = {"source_file": filter_file} if filter_file else None
+        
         results = self.collection.query(
             query_texts=[query],
-            n_results=limit
+            n_results=limit,
+            where=where_clause
         )
         
-        # Reformat Chroma's nested dictionary output into a clean, scannable list
+        # Reformat Chroma's output into a clean, scannable list
         formatted_results = []
-        if results and results["documents"]:
+        if results and results["documents"] and len(results["documents"]) > 0:
             for i in range(len(results["documents"][0])):
                 formatted_results.append({
                     "id": results["ids"][0][i],

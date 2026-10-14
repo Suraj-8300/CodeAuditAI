@@ -1,4 +1,4 @@
-# 🧠 AI Code Auditor: Core Engineering Foundations
+# 🧠 CodeAuditAI: Core Engineering Foundations
 
 Welcome to the architectural sandbox. This document serves as a production-grade guide explaining the software engineering patterns, asynchronous designs, and artificial intelligence frameworks implemented across this multi-agent code auditing platform.
 
