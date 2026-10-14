@@ -457,6 +457,40 @@ Created a standalone Python app containing 3 intentional flaws:
 
 ---
 
+## Session 10 — 2026-10-15 | Privacy-First Dual Architecture Framing & Ephemeral Cloud Sandbox Strategy
+
+### 🎯 Objective & Business Strategy
+Clarify and formalize how repository storage, user privacy, and data isolation operate when transitioning CodeAuditAI from local execution to a public web SaaS (`codeaudit.ai`). 
+Because engineering teams value their proprietary codebase confidentiality above all else, CodeAuditAI is explicitly framed around a **Privacy-First Dual Architecture**:
+1. **Option A (Local-First CLI & Local Studio)**: For proprietary enterprise codebases where zero bytes of source code must ever leave the machine.
+2. **Option B (Ephemeral Cloud Studio)**: For zero-install open-source audits, instant browser demos, and PR reviews.
+
+---
+
+### 🛡️ Core Cloud Storage & Isolation Architecture
+When deployed on the public web:
+- **Ephemeral RAM-Disk Sandboxes (`tmpfs`)**: Cloned repositories reside in temporary in-memory `tmpfs` mounts under unique UUID namespaces (`/tmp/audits/{uuid}/`), avoiding persistent SSD storage.
+- **Zero-Retention Auto-Purge (ZDR)**: Source files, temporary ASTs, and ChromaDB session collections are immediately deleted upon audit delivery via `shutil.rmtree()`. A 1-hour hard TTL safety sweeper guarantees no orphaned data accumulates.
+- **BYOK Direct Pipe**: Prompts stream directly to Google AI Studio, Anthropic, or OpenAI under enterprise zero-model-training terms.
+- **Ephemeral OAuth Tokens**: Short-lived tokens for private repos are held strictly in memory and discarded upon clone.
+
+---
+
+### 💻 Product & Documentation Updates
+1. **Landing Page (`app/static/index.html`)**:
+   - Added a prominent, dedicated section: **"Your Code Stays in Your Hands"** featuring a side-by-side comparison between **100% Local CLI & Air-Gapped Web Studio** and **Ephemeral Cloud Web Studio**.
+2. **Documentation Portal (`app/static/docs.html`)**:
+   - Added `data-privacy` article under **Engine Architecture**: "Data Privacy & Repository Storage Architecture" detailing RAM-disk sandboxes, auto-purge policies, and the local vs cloud decision matrix.
+   - Connected sidebar links and search index.
+
+---
+
+### 🧪 Verification
+- [x] Verified `/docs` and `index.html` pass HTML structure and routing tests.
+- [x] Verified all privacy-first messaging aligns with user value proposition.
+
+---
+
 *Last updated: 2026-10-15*
 
 

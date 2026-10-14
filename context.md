@@ -157,3 +157,4 @@ When making changes to this codebase:
 3. **Ensure Path Normalization**: Whenever saving or querying files or repositories in SQLite, always run `os.path.abspath(...)`.
 4. **Maintain Polyglot Support**: When adding new language features, update both `app/services/language_detector.py` and `app/services/vector_db.py`.
 5. **Verify SARIF Compliance**: Any modifications to audit output schemas must maintain OASIS SARIF v2.1.0 validity so GitHub Security integration does not break.
+6. **Privacy-First Dual Architecture**: CodeAuditAI supports both 100% Local-First execution (CLI and `127.0.0.1:8000` studio) and Ephemeral Cloud Sandboxes. In cloud/web SaaS deployments, cloned repositories must be treated as volatile `tmpfs` RAM-disks with zero persistent data retention and immediate auto-purge upon audit completion.
