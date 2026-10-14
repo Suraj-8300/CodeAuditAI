@@ -2,7 +2,7 @@
 <html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>CodeAuditAI — Autonomous Multi-Agent Code Security & Performance Review Studio</title>
   
   <!-- Google Fonts: Google Sans & JetBrains Mono -->
@@ -38,8 +38,8 @@
               greySurface: '#f8fafd',
               greyBorder: '#dadce0',
               greyText: '#5f6368',
-              darkSurface: '#202124',
-              darkCard: '#2d2f31',
+              darkSurface: '#131314',
+              darkCard: '#1e1f20',
               darkBorder: '#3c4043'
             }
           }
@@ -73,35 +73,50 @@
     ::-webkit-scrollbar-thumb { background: rgba(120, 120, 120, 0.25); border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(120, 120, 120, 0.45); }
     
+    /* Hide scrollbars for chip carousels */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
     .code-gradient {
       background: linear-gradient(135deg, #1a73e8 0%, #1e8e3e 50%, #f9ab00 100%);
     }
+
+    /* Dynamic viewport container styling */
+    .studio-workspace-height {
+      min-height: calc(100vh - 15rem);
+    }
+    @media (min-height: 800px) and (min-width: 1024px) {
+      .studio-workspace-height {
+        height: calc(100vh - 14.5rem);
+        min-height: 600px;
+      }
+    }
   </style>
 </head>
-<body class="bg-google-greySurface dark:bg-[#131314] text-[#202124] dark:text-[#e3e3e3] min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
+<body class="bg-google-greySurface dark:bg-[#131314] text-[#202124] dark:text-[#e3e3e3] min-h-screen flex flex-col font-sans antialiased transition-colors duration-200 overflow-x-hidden">
 
   <!-- ========================================================================= -->
   <!-- TOP NAVIGATION BAR -->
   <!-- ========================================================================= -->
-  <header class="sticky top-0 z-50 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-md border-b border-google-greyBorder dark:border-google-darkBorder transition-colors">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-md border-b border-google-greyBorder dark:border-google-darkBorder transition-colors">
+    <div class="w-full max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
       
       <!-- Brand Logo -->
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('landing')">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-          <i class="fa-solid fa-shield-halved text-lg"></i>
+      <div class="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer shrink-0" onclick="switchView('landing')">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+          <i class="fa-solid fa-shield-halved text-base sm:text-lg"></i>
         </div>
         <div>
           <div class="flex items-center space-x-1.5">
-            <span class="text-lg font-bold tracking-tight text-[#202124] dark:text-white">CodeAudit<span class="text-blue-600 dark:text-blue-400">AI</span></span>
-            <span class="text-[10px] font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">Studio 2.0</span>
+            <span class="text-base sm:text-lg font-bold tracking-tight text-[#202124] dark:text-white">CodeAudit<span class="text-blue-600 dark:text-blue-400">AI</span></span>
+            <span class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 sm:px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">Studio</span>
           </div>
-          <p class="text-[11px] text-google-greyText dark:text-slate-400 hidden sm:block">Autonomous Multi-Agent Code Intelligence</p>
+          <p class="text-[10px] sm:text-[11px] text-google-greyText dark:text-slate-400 hidden xl:block">Autonomous Multi-Agent Code Intelligence</p>
         </div>
       </div>
 
-      <!-- Navigation Links -->
-      <nav class="hidden md:flex items-center space-x-1">
+      <!-- Desktop Navigation Links (Hidden on < lg) -->
+      <nav class="hidden lg:flex items-center space-x-1 shrink-0">
         <button onclick="switchView('landing')" id="nav-btn-landing" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 font-semibold">
           <i class="fa-solid fa-house mr-1.5"></i>Overview
         </button>
@@ -109,7 +124,7 @@
           <i class="fa-solid fa-cubes-stacked mr-1.5 text-blue-600"></i>Audit Studio
         </button>
         <button onclick="switchView('cli-docs')" id="nav-btn-cli-docs" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard">
-          <i class="fa-solid fa-terminal mr-1.5 text-emerald-600"></i>CLI Docs & Downloads
+          <i class="fa-solid fa-terminal mr-1.5 text-emerald-600"></i>CLI Docs
         </button>
         <button onclick="switchView('snippet')" id="nav-btn-snippet" class="nav-btn px-3 py-1.5 rounded-full text-xs font-medium transition text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-google-darkCard">
           <i class="fa-solid fa-code mr-1.5 text-amber-500"></i>Sandbox
@@ -123,84 +138,149 @@
       </nav>
 
       <!-- Action Items & Indicators -->
-      <div class="flex items-center space-x-2 text-xs">
-        <!-- BYOK Pill -->
-        <button onclick="openBYOKModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-google-greySurface dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-[#3c4043] dark:text-slate-200 hover:border-blue-500 transition shadow-sm">
+      <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs shrink-0">
+        <!-- BYOK Pill (Responsive) -->
+        <button onclick="openBYOKModal()" class="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-google-greySurface dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-[#3c4043] dark:text-slate-200 hover:border-blue-500 transition shadow-sm" title="Configure AI Provider & Keys">
           <i class="fa-solid fa-key text-amber-500"></i>
-          <span id="header-active-provider" class="font-medium font-mono text-[11px]">BYOK: Gemini 3.5 Flash Lite</span>
+          <span id="header-active-provider" class="hidden sm:inline font-medium font-mono text-[11px] truncate max-w-[140px] md:max-w-[200px]">Gemini 3.5 Flash Lite</span>
+          <span class="sm:hidden font-medium font-mono text-[11px]">BYOK</span>
           <i class="fa-solid fa-sliders text-slate-400 text-[10px]"></i>
         </button>
 
         <!-- Theme Toggle Button -->
-        <button onclick="toggleTheme()" id="btn-theme-toggle" title="Toggle Light/Dark Theme" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">
+        <button onclick="toggleTheme()" id="btn-theme-toggle" title="Toggle Light/Dark Theme" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-slate-600 dark:text-slate-300 hover:text-blue-600 transition shrink-0">
           <i id="theme-icon" class="fa-solid fa-moon"></i>
         </button>
 
         <!-- GitHub Repo Button -->
-        <a href="https://github.com/Suraj-8300/CodeAuditAI" target="_blank" class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202124] text-white hover:bg-black transition font-medium">
+        <a href="https://github.com/Suraj-8300/CodeAuditAI" target="_blank" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#202124] text-white hover:bg-black transition font-medium shrink-0">
           <i class="fa-brands fa-github text-sm"></i>
           <span>GitHub</span>
         </a>
+
+        <!-- Mobile Menu Toggle Button (Visible on < lg) -->
+        <button onclick="toggleMobileMenu()" id="btn-mobile-menu" aria-label="Open Navigation Menu" class="lg:hidden w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-google-darkCard border border-google-greyBorder dark:border-google-darkBorder text-slate-700 dark:text-slate-200 hover:text-blue-600 transition shrink-0">
+          <i id="mobile-menu-icon" class="fa-solid fa-bars text-sm"></i>
+        </button>
       </div>
     </div>
   </header>
 
   <!-- ========================================================================= -->
+  <!-- MOBILE NAVIGATION DRAWER OVERLAY -->
+  <!-- ========================================================================= -->
+  <div id="mobile-nav-drawer" class="lg:hidden hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity">
+    <div class="fixed top-0 right-0 w-72 max-w-[85vw] h-full bg-white dark:bg-google-darkCard p-5 border-l border-google-greyBorder dark:border-google-darkBorder shadow-2xl flex flex-col justify-between overflow-y-auto">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-google-greyBorder dark:border-google-darkBorder">
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white text-xs">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <span class="font-bold text-sm text-[#202124] dark:text-white">Navigation</span>
+          </div>
+          <button onclick="closeMobileMenu()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-black dark:hover:text-white">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <nav class="space-y-1 text-xs">
+          <button onclick="switchView('landing')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-house w-4 text-blue-600"></i>
+            <span>Overview & Landing</span>
+          </button>
+          <button onclick="switchView('studio')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-cubes-stacked w-4 text-blue-600"></i>
+            <span>Audit Studio</span>
+          </button>
+          <button onclick="switchView('cli-docs')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-terminal w-4 text-emerald-600"></i>
+            <span>CLI Docs & Setup</span>
+          </button>
+          <button onclick="switchView('snippet')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-code w-4 text-amber-500"></i>
+            <span>Snippet Sandbox</span>
+          </button>
+          <button onclick="switchView('reports')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-file-shield w-4 text-indigo-500"></i>
+            <span>Executive Reports</span>
+          </button>
+          <button onclick="switchView('languages')" class="mobile-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="fa-solid fa-layer-group w-4 text-slate-400"></i>
+            <span>25+ Languages Matrix</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="pt-4 border-t border-google-greyBorder dark:border-google-darkBorder space-y-2 text-xs">
+        <button onclick="openBYOKModal(); closeMobileMenu();" class="w-full py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-key text-amber-500"></i>
+          <span>Configure BYOK Keys</span>
+        </button>
+        <a href="https://github.com/Suraj-8300/CodeAuditAI" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-[#202124] text-white font-medium flex items-center justify-center space-x-2">
+          <i class="fa-brands fa-github"></i>
+          <span>GitHub Repository</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- MAIN CONTAINER (MULTI-VIEW ROUTER) -->
   <!-- ========================================================================= -->
-  <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+  <main class="flex-1 w-full max-w-[1720px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col min-w-0">
 
     <!-- ======================================================================= -->
     <!-- 1. LANDING PAGE VIEW (#landing-view) -->
     <!-- ======================================================================= -->
-    <div id="landing-view" class="view-panel space-y-16 py-6">
+    <div id="landing-view" class="view-panel space-y-12 sm:space-y-16 py-2 sm:py-4">
       
       <!-- HERO SECTION -->
-      <section class="text-center space-y-6 max-w-4xl mx-auto pt-6 pb-2">
+      <section class="text-center space-y-5 max-w-4xl mx-auto pt-4 pb-2 px-2">
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold">
           <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
           <span>Autonomous Tri-Agent Consensus Code Review & Security Studio</span>
         </div>
 
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#202124] dark:text-white leading-[1.15]">
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#202124] dark:text-white leading-[1.15]">
           Audit Less. <br />
           <span class="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
             Ship Fearlessly.
           </span>
         </h1>
 
-        <p class="text-base sm:text-lg text-google-greyText dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-xs sm:text-base lg:text-lg text-google-greyText dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
           Polyglot static & semantic code auditing across 25+ languages. Concurrently runs 
           <strong>Security Auditor</strong> and <strong>Performance Critic</strong> agents grounded in whole-codebase 
           vector memory, generating copy-pasteable remediations and standard <strong>OASIS SARIF v2.1.0</strong> exports.
         </p>
 
         <!-- CTA Buttons -->
-        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <button onclick="switchView('studio')" class="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition shadow-lg shadow-blue-500/25 flex items-center space-x-2">
+        <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 pt-2">
+          <button onclick="switchView('studio')" class="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm transition shadow-lg shadow-blue-500/25 flex items-center space-x-2">
             <i class="fa-solid fa-rocket"></i>
             <span>Launch Audit Studio</span>
           </button>
           
-          <button onclick="switchView('cli-docs')" class="px-6 py-3 rounded-full bg-white dark:bg-google-darkCard hover:bg-slate-50 dark:hover:bg-slate-800 border border-google-greyBorder dark:border-google-darkBorder text-[#202124] dark:text-white font-semibold text-sm transition flex items-center space-x-2 shadow-sm">
+          <button onclick="switchView('cli-docs')" class="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white dark:bg-google-darkCard hover:bg-slate-50 dark:hover:bg-slate-800 border border-google-greyBorder dark:border-google-darkBorder text-[#202124] dark:text-white font-semibold text-xs sm:text-sm transition flex items-center space-x-2 shadow-sm">
             <i class="fa-solid fa-terminal text-emerald-600"></i>
             <span>CLI Docs & Downloads</span>
           </button>
 
-          <button onclick="scrollToLiveDemo()" class="px-5 py-3 rounded-full text-google-greyText dark:text-slate-300 hover:text-blue-600 font-semibold text-sm transition flex items-center space-x-1.5">
+          <button onclick="scrollToLiveDemo()" class="px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-google-greyText dark:text-slate-300 hover:text-blue-600 font-semibold text-xs sm:text-sm transition flex items-center space-x-1.5">
             <span>Instant Demo</span>
             <i class="fa-solid fa-arrow-down text-xs"></i>
           </button>
         </div>
 
-        <!-- One-Line Quick Install Pill -->
-        <div class="pt-4 max-w-lg mx-auto">
-          <div class="bg-white dark:bg-[#1e1f20] p-1.5 pl-4 rounded-full border border-google-greyBorder dark:border-google-darkBorder shadow-sm flex items-center justify-between text-xs font-mono text-slate-700 dark:text-slate-300">
-            <div class="truncate flex items-center space-x-2">
+        <!-- One-Line Quick Install Pill (Responsive) -->
+        <div class="pt-2 w-full max-w-xl mx-auto">
+          <div class="bg-white dark:bg-[#1e1f20] p-1.5 pl-3 sm:pl-4 rounded-2xl sm:rounded-full border border-google-greyBorder dark:border-google-darkBorder shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono">
+            <div class="truncate flex items-center space-x-2 w-full sm:w-auto overflow-x-auto py-1">
               <span class="text-emerald-500 font-bold">$</span>
-              <span class="truncate">curl -sSL https://raw.githubusercontent.com/.../install.sh | bash</span>
+              <span class="text-slate-800 dark:text-slate-200 select-all font-mono text-[11px] sm:text-xs">curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash</span>
             </div>
-            <button onclick="copyInstallCmd()" id="btn-copy-install" class="px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-sans font-semibold hover:bg-blue-100 transition flex items-center space-x-1">
+            <button onclick="copyInstallCmd()" id="btn-copy-install" class="w-full sm:w-auto px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-sans font-semibold hover:bg-blue-100 transition flex items-center justify-center space-x-1 shrink-0">
               <i class="fa-regular fa-copy"></i>
               <span>Copy</span>
             </button>
@@ -209,71 +289,76 @@
       </section>
 
       <!-- INTERACTIVE LIVE AUDIT DEMO WIDGET -->
-      <section id="live-demo-section" class="bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-6 sm:p-8 google-shadow-2 transition">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-google-greyBorder dark:border-google-darkBorder">
+      <section id="live-demo-section" class="bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-4 sm:p-6 lg:p-8 google-shadow-2 transition">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 sm:pb-6 border-b border-google-greyBorder dark:border-google-darkBorder">
           <div>
             <div class="flex items-center space-x-2 mb-1">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-              <h2 class="text-lg font-bold text-[#202124] dark:text-white">Interactive Tri-Agent Live Demo</h2>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <h2 class="text-base sm:text-lg font-bold text-[#202124] dark:text-white">Interactive Tri-Agent Live Demo</h2>
             </div>
             <p class="text-xs text-google-greyText dark:text-slate-400">Select an intentional code vulnerability below and trigger real-time AI security & performance inspection.</p>
           </div>
           
-          <!-- Language selector pills -->
-          <div class="flex flex-wrap items-center gap-1.5 bg-google-greySurface dark:bg-[#1e1f20] p-1 rounded-xl border border-google-greyBorder dark:border-google-darkBorder">
-            <button onclick="loadDemoSample('python')" class="demo-lang-btn px-3 py-1 rounded-lg text-xs font-medium transition bg-white dark:bg-google-darkCard text-blue-600 dark:text-blue-400 shadow-sm font-semibold">Python SQLi</button>
-            <button onclick="loadDemoSample('c')" class="demo-lang-btn px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">C Buffer Overflow</button>
-            <button onclick="loadDemoSample('javascript')" class="demo-lang-btn px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">JS DOM XSS</button>
-            <button onclick="loadDemoSample('java')" class="demo-lang-btn px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">Java Deserialization</button>
-            <button onclick="loadDemoSample('perf')" class="demo-lang-btn px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">O(n²) Bottleneck</button>
+          <!-- Language selector pills (Responsive chip strip) -->
+          <div class="overflow-x-auto no-scrollbar flex items-center gap-1.5 bg-google-greySurface dark:bg-[#1e1f20] p-1 rounded-xl border border-google-greyBorder dark:border-google-darkBorder shrink-0">
+            <button onclick="loadDemoSample('python')" class="demo-lang-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition bg-white dark:bg-google-darkCard text-blue-600 dark:text-blue-400 shadow-sm font-semibold shrink-0">Python SQLi</button>
+            <button onclick="loadDemoSample('c')" class="demo-lang-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white shrink-0">C Overflow</button>
+            <button onclick="loadDemoSample('javascript')" class="demo-lang-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white shrink-0">JS XSS</button>
+            <button onclick="loadDemoSample('java')" class="demo-lang-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white shrink-0">Java Deserialization</button>
+            <button onclick="loadDemoSample('perf')" class="demo-lang-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white shrink-0">O(n²) Bottleneck</button>
           </div>
         </div>
 
-        <!-- Code & Output Split Sandbox -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6">
-          <!-- Code Editor Side (6 cols) -->
-          <div class="lg:col-span-6 flex flex-col space-y-3">
+        <!-- Code & Output Split Sandbox (Matched Dynamic Heights) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 pt-4 sm:pt-6">
+          <!-- Code Editor Side -->
+          <div class="flex flex-col space-y-2">
             <div class="flex items-center justify-between text-xs text-google-greyText dark:text-slate-400">
               <span class="font-semibold uppercase tracking-wider">Input Source Snippet</span>
               <span id="demo-lang-indicator" class="font-mono bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-bold">Python</span>
             </div>
-            <textarea id="demo-code-input" rows="12" class="w-full bg-slate-900 text-slate-100 font-mono text-xs p-4 rounded-2xl border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed shadow-inner"></textarea>
+            <textarea id="demo-code-input" class="w-full h-64 sm:h-80 lg:h-[400px] bg-slate-900 text-slate-100 font-mono text-xs p-4 rounded-2xl border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed shadow-inner resize-none"></textarea>
             
-            <button onclick="runLiveDemoAudit()" id="btn-run-live-demo" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center justify-center space-x-2 shadow-md shadow-blue-500/20">
+            <button onclick="runLiveDemoAudit()" id="btn-run-live-demo" class="w-full py-2.5 sm:py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center justify-center space-x-2 shadow-md shadow-blue-500/20">
               <i class="fa-solid fa-play"></i>
               <span>Run Tri-Agent Consensus Audit</span>
             </button>
           </div>
 
-          <!-- Audit Output Side (6 cols) -->
-          <div class="lg:col-span-6 flex flex-col space-y-3">
+          <!-- Audit Output Side -->
+          <div class="flex flex-col space-y-2">
             <div class="flex items-center justify-between text-xs text-google-greyText dark:text-slate-400">
               <span class="font-semibold uppercase tracking-wider">Reconciled Audit Result</span>
-              <span id="demo-audit-status" class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">Idle</span>
+              <span id="demo-audit-status" class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[11px]">Idle</span>
             </div>
 
-            <div id="demo-results-box" class="flex-1 bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-4 overflow-y-auto max-h-[380px] text-xs leading-relaxed prose dark:prose-invert">
-              <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-16">
+            <div id="demo-results-box" class="h-64 sm:h-80 lg:h-[400px] bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-4 overflow-y-auto text-xs leading-relaxed prose dark:prose-invert max-w-none">
+              <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
                 <i class="fa-solid fa-shield-halved text-3xl mb-3 text-slate-400 opacity-60"></i>
                 <p class="font-medium text-slate-600 dark:text-slate-300">Ready for Live Audit</p>
                 <p class="text-[11px] text-slate-400 mt-1 max-w-xs">Click the button on the left to watch the Security Auditor and Performance Critic analyze this code in parallel.</p>
               </div>
+            </div>
+            
+            <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1">
+              <span>Zero setup needed for demo testing</span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-medium font-mono">100% Free AI Studio Tier</span>
             </div>
           </div>
         </div>
       </section>
 
       <!-- 6 REVOLUTIONARY CAPABILITIES (GOOGLE CLOUD STYLE CARDS) -->
-      <section class="space-y-8">
-        <div class="text-center space-y-2">
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Engineered for Production Precision</h2>
+      <section class="space-y-6">
+        <div class="text-center space-y-1.5">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#202124] dark:text-white">Engineered for Production Precision</h2>
           <p class="text-xs sm:text-sm text-google-greyText dark:text-slate-400 max-w-xl mx-auto">Eliminating false positives and blind spots through tri-agent consensus and deep semantic context.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           
           <!-- Card 1 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-blue-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-blue-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-lg">
                 <i class="fa-solid fa-users-viewfinder"></i>
@@ -283,14 +368,14 @@
                 Security Auditor (OWASP & CWE) and Performance Critic (Big-O & I/O) execute concurrently. The Joint Reconciler harmonizes trade-offs so security patches never degrade execution speed.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-blue-600 flex items-center justify-between">
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-blue-600 flex items-center justify-between">
               <span>LangGraph Pregel</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
 
           <!-- Card 2 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-emerald-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-emerald-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center text-lg">
                 <i class="fa-solid fa-diagram-project"></i>
@@ -300,128 +385,92 @@
                 AST syntax-aware text splitters index functions and classes into ChromaDB. Cross-file queries ground each audit with imported definitions, schemas, and neighboring module roles.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-emerald-600 flex items-center justify-between">
-              <span>ChromaDB Vector DB</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-emerald-600 flex items-center justify-between">
+              <span>ChromaDB Vector Store</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
 
           <!-- Card 3 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-amber-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-amber-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-lg">
-                <i class="fa-solid fa-code-compare"></i>
+                <i class="fa-solid fa-layer-group"></i>
               </div>
-              <h3 class="text-sm font-bold text-[#202124] dark:text-white">25+ Polyglot Rule Engine</h3>
+              <h3 class="text-sm font-bold text-[#202124] dark:text-white">25+ Polyglot Language Rules</h3>
               <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-                Specialized exploit checks tailored to C/C++ memory safety, Java deserialization, Python SSTI, Go race conditions, JavaScript DOM XSS, and CSS clickjacking injection vectors.
+                Specialized heuristics for C/C++ memory safety, Java deserialization, JavaScript prototype pollution, Python GIL & SQLi, Go goroutines, Rust unsafe blocks, and web configs.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-amber-600 flex items-center justify-between">
-              <span>25+ Language Ast</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-amber-600 flex items-center justify-between">
+              <span>Language Detector</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
 
           <!-- Card 4 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-purple-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-purple-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center text-lg">
-                <i class="fa-solid fa-shield-cat"></i>
+                <i class="fa-solid fa-file-code"></i>
               </div>
               <h3 class="text-sm font-bold text-[#202124] dark:text-white">OASIS SARIF v2.1.0 Ready</h3>
               <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-                Direct export into the OASIS SARIF v2.1.0 standard format. Seamless 1-click integration with GitHub Advanced Security Code Scanning alerts, VS Code SARIF Viewer, and GitLab SAST.
+                Outputs industry-standard SARIF reports directly importable into GitHub Advanced Security tab, GitLab Vulnerability Report, and VS Code SARIF Viewer with exact line locations.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-purple-600 flex items-center justify-between">
-              <span>GitHub Security Native</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-purple-600 flex items-center justify-between">
+              <span>GitHub Security CI/CD</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
 
           <!-- Card 5 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-blue-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-blue-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
               <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-lg">
                 <i class="fa-solid fa-key"></i>
               </div>
-              <h3 class="text-sm font-bold text-[#202124] dark:text-white">BYOK Multi-Model Freedom</h3>
+              <h3 class="text-sm font-bold text-[#202124] dark:text-white">BYOK Multi-Model Engine</h3>
               <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-                Run 100% free with Google AI Studio (Gemini 3.5 Flash Lite with 500 requests/day), or Bring Your Own Key for Anthropic Claude, OpenAI / Codex, DeepSeek, and GitHub Copilot.
+                Connect Google AI Studio (500 free requests/day), Anthropic Claude 3.7 Sonnet, OpenAI Codex, DeepSeek Coder, or local air-gapped models via custom OpenAI-compatible proxies.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-blue-600 flex items-center justify-between">
-              <span>Runtime Provider Swap</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-blue-600 flex items-center justify-between">
+              <span>Bring Your Own Key</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
 
           <!-- Card 6 -->
-          <div class="bg-white dark:bg-google-darkCard p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-emerald-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
+          <div class="bg-white dark:bg-google-darkCard p-5 sm:p-6 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder hover:border-teal-500 transition google-shadow-1 hover:google-shadow-2 flex flex-col justify-between">
             <div class="space-y-3">
-              <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center text-lg">
+              <div class="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 flex items-center justify-center text-lg">
                 <i class="fa-solid fa-terminal"></i>
               </div>
-              <h3 class="text-sm font-bold text-[#202124] dark:text-white">Unified Terminal CLI</h3>
+              <h3 class="text-sm font-bold text-[#202124] dark:text-white">Dual Interface Architecture</h3>
               <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-                Audit GitHub repos, local paths, or inline snippets directly in your shell. Generate colored rich tables, Markdown reports, and automated CI/CD security gate checks.
+                Seamless parity between the Google Material 3 Web Review Studio and the high-speed desktop CLI (`codeaudit`), supporting git hooks, bash scripts, and CI workflows.
               </p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-emerald-600 flex items-center justify-between">
-              <span>./codeaudit binary</span>
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-google-darkBorder text-[11px] font-semibold text-teal-600 flex items-center justify-between">
+              <span>Web Studio + CLI</span>
               <i class="fa-solid fa-arrow-right"></i>
             </div>
           </div>
+
         </div>
       </section>
 
-      <!-- 3-STEP WORKFLOW WALKTHROUGH -->
-      <section class="bg-white dark:bg-google-darkCard p-8 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 space-y-8">
-        <div class="text-center space-y-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Streamlined Developer Workflow</span>
-          <h2 class="text-2xl font-bold text-[#202124] dark:text-white">How CodeAuditAI Reviews Your Code</h2>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-          <!-- Step 1 -->
-          <div class="space-y-3 text-center sm:text-left">
-            <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-md">1</div>
-            <h3 class="text-sm font-bold text-[#202124] dark:text-white">Ingest & Map Architecture</h3>
-            <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-              Enter any remote GitHub URL or local directory. The system scans files, strips build artifacts, and constructs an architectural blueprint indexed into ChromaDB.
-            </p>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="space-y-3 text-center sm:text-left">
-            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-md">2</div>
-            <h3 class="text-sm font-bold text-[#202124] dark:text-white">Tri-Agent Deep Consensus</h3>
-            <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-              Security Auditor flags language-specific CWEs while Performance Critic compares Big-O complexity. The Joint Reconciler resolves conflicts and formulates copy-pasteable patches.
-            </p>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="space-y-3 text-center sm:text-left">
-            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-md">3</div>
-            <h3 class="text-sm font-bold text-[#202124] dark:text-white">Export & Remediate</h3>
-            <p class="text-xs text-google-greyText dark:text-slate-300 leading-relaxed">
-              Inspect visual before/after diffs in the Web Studio or download OASIS SARIF v2.1.0 findings to block PR vulnerabilities in GitHub Actions CI/CD workflows.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- CALL TO ACTION BANNER -->
-      <section class="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 rounded-3xl p-8 sm:p-12 text-center text-white space-y-6 shadow-xl">
-        <h2 class="text-2xl sm:text-3xl font-extrabold">Ready to Audit Your First Repository?</h2>
-        <p class="text-xs sm:text-sm text-blue-100 max-w-xl mx-auto">Zero installation friction. Use the free Google AI Studio tier (500 free requests per day) without providing credit cards.</p>
-        <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <button onclick="switchView('studio')" class="px-6 py-3 rounded-full bg-white text-blue-600 font-bold text-xs hover:bg-slate-100 transition shadow-lg">
+      <!-- CTA BANNER -->
+      <section class="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 rounded-3xl p-6 sm:p-10 text-white text-center space-y-4 shadow-xl">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Ready to audit your first repository?</h2>
+        <p class="text-xs sm:text-sm text-blue-100 max-w-xl mx-auto">Launch the Web Studio directly in your browser or run a full audit via terminal in under 30 seconds.</p>
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button onclick="switchView('studio')" class="px-6 py-2.5 sm:py-3 rounded-full bg-white text-blue-600 font-bold text-xs hover:bg-slate-100 transition shadow-lg">
             Open Web Review Studio
           </button>
-          <button onclick="switchView('cli-docs')" class="px-6 py-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/30 font-semibold text-xs transition">
+          <button onclick="switchView('cli-docs')" class="px-6 py-2.5 sm:py-3 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/30 font-semibold text-xs transition">
             View CLI Installation Guide
           </button>
         </div>
@@ -432,64 +481,64 @@
     <!-- ======================================================================= -->
     <!-- 2. AUDIT STUDIO VIEW (#studio-view) -->
     <!-- ======================================================================= -->
-    <div id="studio-view" class="view-panel hidden flex-1 flex flex-col space-y-6">
+    <div id="studio-view" class="view-panel hidden flex-1 flex flex-col space-y-4 min-h-0">
       
       <!-- Project Workspace Toolbar & Ingestion Bar -->
-      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-5 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 space-y-4">
+      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-4 sm:p-5 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 space-y-3 shrink-0">
         
         <!-- Top Toolbar: Project Switcher & Workspace Actions -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-google-greyBorder dark:border-google-darkBorder">
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-300 flex items-center space-x-1.5">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 flex-1">
+            <span class="text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-300 flex items-center space-x-1.5 shrink-0">
               <i class="fa-solid fa-layer-group text-blue-600"></i>
               <span>Active Project:</span>
             </span>
-            <div class="relative min-w-[240px] max-w-[360px]">
+            <div class="relative flex-1 min-w-[200px] max-w-sm">
               <select id="project-selector" onchange="onProjectSelected(this.value)" class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-3 py-1.5 text-xs text-[#202124] dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500 transition appearance-none pr-8 cursor-pointer">
                 <option value="">-- No Project Selected --</option>
               </select>
               <i class="fa-solid fa-chevron-down absolute right-3 top-2.5 text-[10px] text-slate-400 pointer-events-none"></i>
             </div>
-            <button onclick="clearActiveProject()" id="btn-close-project" title="Deselect Project" class="hidden text-xs text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-1.5">
+            <button onclick="clearActiveProject()" id="btn-close-project" title="Deselect Project" class="hidden text-xs text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-1.5 shrink-0">
               <i class="fa-solid fa-xmark"></i>
               <span>Deselect</span>
             </button>
-            <button onclick="deleteCurrentProject()" id="btn-delete-project" title="Delete Project from Cache" class="hidden text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900 transition flex items-center space-x-1.5">
+            <button onclick="deleteCurrentProject()" id="btn-delete-project" title="Delete Project from Cache" class="hidden text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900 transition flex items-center space-x-1.5 shrink-0">
               <i class="fa-solid fa-trash-can"></i>
-              <span>Delete Project</span>
+              <span>Delete</span>
             </button>
           </div>
           
-          <div class="flex items-center space-x-3 text-xs text-slate-500">
-            <span id="project-stats-pill" class="hidden font-mono px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold">0 files</span>
-            <button onclick="loadProjectsList()" title="Refresh Projects from Database" class="text-xs text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-1.5">
+          <div class="flex items-center space-x-2 sm:space-x-3 text-xs text-slate-500 shrink-0">
+            <span id="project-stats-pill" class="hidden font-mono px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold text-[11px]">0 files</span>
+            <button onclick="loadProjectsList()" title="Refresh Projects from Database" class="text-xs text-google-greyText dark:text-slate-300 hover:text-black dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 transition flex items-center space-x-1.5 shrink-0">
               <i class="fa-solid fa-rotate"></i>
-              <span>Refresh Projects</span>
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
         <!-- Ingestion Bar: Clone or Local Ingest -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div class="flex-1">
             <label class="block text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-400 mb-1.5">
               <i class="fa-brands fa-github text-[#202124] dark:text-white mr-1"></i> Ingest New Codebase (GitHub URL or Local Path)
             </label>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div class="relative flex-1">
-                <i class="fa-solid fa-link absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                <i class="fa-solid fa-link absolute left-3.5 top-3 text-slate-400 text-xs"></i>
                 <input type="text" id="repo-input" 
                   placeholder="https://github.com/owner/repository OR /absolute/path/to/project" 
                   value=""
-                  class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#202124] dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition font-mono">
+                  class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl pl-9 pr-3 py-2 text-xs text-[#202124] dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition font-mono">
               </div>
-              <button onclick="auditRepository()" id="btn-audit-repo" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition flex items-center space-x-2 shadow-md shadow-blue-500/20 whitespace-nowrap">
+              <button onclick="auditRepository()" id="btn-audit-repo" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-md shadow-blue-500/20 whitespace-nowrap shrink-0">
                 <i class="fa-solid fa-rocket"></i>
                 <span>Audit Codebase</span>
               </button>
             </div>
           </div>
-          <div class="flex items-center space-x-4 pt-1 md:pt-5">
+          <div class="flex items-center space-x-4 pt-1 lg:pt-5 shrink-0">
             <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
               <input type="checkbox" id="check-high-only" checked class="rounded text-blue-600 focus:ring-0 w-4 h-4">
               <span>Auto-Audit High-Risk Files</span>
@@ -498,89 +547,89 @@
         </div>
 
         <!-- Progress Banner (Hidden by default) -->
-        <div id="repo-progress" class="hidden mt-4 pt-4 border-t border-google-greyBorder dark:border-google-darkBorder">
+        <div id="repo-progress" class="hidden mt-3 pt-3 border-t border-google-greyBorder dark:border-google-darkBorder">
           <div class="flex items-center justify-between text-xs mb-1.5">
             <span id="progress-text" class="text-blue-600 dark:text-blue-400 font-medium flex items-center space-x-2">
               <i class="fa-solid fa-circle-notch fa-spin"></i>
               <span>Mapping codebase and evaluating semantic dependencies...</span>
             </span>
-            <span class="text-slate-400 font-mono" id="progress-sub">Semantic Vector Analysis</span>
+            <span class="text-slate-400 font-mono text-[11px]" id="progress-sub">Semantic Vector Analysis</span>
           </div>
-          <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden border border-google-greyBorder dark:border-google-darkBorder">
-            <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 h-2 rounded-full w-2/3 animate-pulse"></div>
+          <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border border-google-greyBorder dark:border-google-darkBorder">
+            <div id="progress-bar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 h-1.5 rounded-full w-2/3 animate-pulse"></div>
           </div>
         </div>
       </div>
 
-      <!-- Repository Content Split View -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+      <!-- Repository Content Dynamic Workspace -->
+      <div class="studio-workspace-height grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 flex-1 min-h-0">
         
-        <!-- Left: File Explorer Sidebar (4 cols) -->
-        <div class="lg:col-span-4 bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-4 flex flex-col max-h-[750px] google-shadow-1">
-          <div class="flex items-center justify-between pb-3 border-b border-google-greyBorder dark:border-google-darkBorder mb-3">
+        <!-- Left: File Explorer Sidebar (3 cols on XL, 4 cols on LG) -->
+        <div class="lg:col-span-4 xl:col-span-3 bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-3.5 sm:p-4 flex flex-col google-shadow-1 h-72 sm:h-80 lg:h-full min-h-0">
+          <div class="flex items-center justify-between pb-2.5 border-b border-google-greyBorder dark:border-google-darkBorder mb-2.5 shrink-0">
             <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-folder-tree text-blue-600"></i>
+              <i class="fa-solid fa-folder-tree text-blue-600 text-xs"></i>
               <span class="text-xs font-bold text-[#202124] dark:text-white uppercase tracking-wider">Project Files</span>
               <span id="file-count-badge" class="px-2 py-0.5 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full font-mono font-bold">0</span>
             </div>
-            <span id="current-repo-label" class="text-xs text-google-greyText dark:text-slate-400 font-mono truncate max-w-[140px]">No Project</span>
+            <span id="current-repo-label" class="text-xs text-google-greyText dark:text-slate-400 font-mono truncate max-w-[120px]">No Project</span>
           </div>
 
           <!-- Search file input -->
-          <div class="relative mb-3">
+          <div class="relative mb-2.5 shrink-0">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="file-search-input" oninput="filterFiles()" placeholder="Filter by filename or .ext (e.g. .py, .c)..."
+            <input type="text" id="file-search-input" oninput="filterFiles()" placeholder="Filter by filename (e.g. .py, .c)..."
               class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#202124] dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500">
           </div>
 
-          <!-- Files list scroll area -->
-          <div id="files-list" class="flex-1 overflow-y-auto space-y-1 pr-1 text-xs">
+          <!-- Files list scroll area (Flex-1 fits dynamically) -->
+          <div id="files-list" class="flex-1 overflow-y-auto space-y-1 pr-1 text-xs min-h-0">
             <!-- Dynamically populated files -->
           </div>
         </div>
 
-        <!-- Right: Active File Review & Audit Workspace (8 cols) -->
-        <div class="lg:col-span-8 bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-5 flex flex-col max-h-[750px] google-shadow-1">
+        <!-- Right: Active File Review & Audit Workspace (9 cols on XL, 8 cols on LG) -->
+        <div class="lg:col-span-8 xl:col-span-9 bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder p-4 sm:p-5 flex flex-col google-shadow-1 min-h-[480px] lg:h-full min-h-0">
           
           <!-- Active File Header -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-google-greyBorder dark:border-google-darkBorder">
-            <div class="flex items-center space-x-3">
-              <div id="active-file-icon" class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-base">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-google-greyBorder dark:border-google-darkBorder shrink-0">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div id="active-file-icon" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-sm sm:text-base shrink-0">
                 <i class="fa-solid fa-file-code"></i>
               </div>
-              <div>
-                <h2 id="active-file-title" class="text-sm font-bold text-[#202124] dark:text-white font-mono">Select a file to inspect</h2>
-                <div class="flex items-center space-x-2 text-xs text-slate-500 mt-0.5">
-                  <span id="active-file-lang" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[10px]">None</span>
-                  <span id="active-file-status" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]">Idle</span>
+              <div class="min-w-0">
+                <h2 id="active-file-title" class="text-xs sm:text-sm font-bold text-[#202124] dark:text-white font-mono truncate max-w-[200px] sm:max-w-md">Select a file to inspect</h2>
+                <div class="flex items-center space-x-1.5 text-xs text-slate-500 mt-0.5">
+                  <span id="active-file-lang" class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[10px]">None</span>
+                  <span id="active-file-status" class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]">Idle</span>
                 </div>
               </div>
             </div>
 
             <!-- Workspace Sub-tabs & Action Buttons -->
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 shrink-0">
               <div class="flex bg-google-greySurface dark:bg-[#1e1f20] rounded-xl p-1 border border-google-greyBorder dark:border-google-darkBorder text-xs">
-                <button onclick="switchInspectorTab('audit')" id="subtab-audit" class="px-3 py-1 rounded-lg font-medium transition bg-white dark:bg-google-darkCard text-blue-600 dark:text-blue-400 shadow-sm font-semibold">
-                  <i class="fa-solid fa-shield-halved mr-1"></i> Security Analysis
+                <button onclick="switchInspectorTab('audit')" id="subtab-audit" class="px-2.5 sm:px-3 py-1 rounded-lg font-medium transition bg-white dark:bg-google-darkCard text-blue-600 dark:text-blue-400 shadow-sm font-semibold text-[11px] sm:text-xs">
+                  <i class="fa-solid fa-shield-halved mr-1"></i><span class="hidden sm:inline">Security </span>Analysis
                 </button>
-                <button onclick="switchInspectorTab('performance')" id="subtab-performance" class="px-3 py-1 rounded-lg font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">
-                  <i class="fa-solid fa-bolt mr-1"></i> Performance
+                <button onclick="switchInspectorTab('performance')" id="subtab-performance" class="px-2.5 sm:px-3 py-1 rounded-lg font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white text-[11px] sm:text-xs">
+                  <i class="fa-solid fa-bolt mr-1"></i>Performance
                 </button>
-                <button onclick="switchInspectorTab('code')" id="subtab-code" class="px-3 py-1 rounded-lg font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white">
-                  <i class="fa-solid fa-code mr-1"></i> Source Code
+                <button onclick="switchInspectorTab('code')" id="subtab-code" class="px-2.5 sm:px-3 py-1 rounded-lg font-medium transition text-google-greyText dark:text-slate-400 hover:text-black dark:hover:text-white text-[11px] sm:text-xs">
+                  <i class="fa-solid fa-code mr-1"></i>Source<span class="hidden sm:inline"> Code</span>
                 </button>
               </div>
 
-              <button onclick="runAuditActiveFile()" id="btn-run-file-audit" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-play"></i>
+              <button onclick="runAuditActiveFile()" id="btn-run-file-audit" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm shrink-0">
+                <i class="fa-solid fa-play text-[10px]"></i>
                 <span>Audit Now</span>
               </button>
             </div>
           </div>
 
-          <!-- Inspector Content Scroll Area -->
-          <div id="inspector-content" class="flex-1 overflow-y-auto mt-4 pr-1 text-sm">
-            <div id="inspector-placeholder" class="h-full flex flex-col items-center justify-center text-slate-400 py-16">
+          <!-- Inspector Content Scroll Area (Dynamically expands to fill height) -->
+          <div id="inspector-content" class="flex-1 overflow-y-auto mt-3 pr-1 text-xs sm:text-sm min-h-0">
+            <div id="inspector-placeholder" class="h-full flex flex-col items-center justify-center text-slate-400 py-12 sm:py-20">
               <i class="fa-solid fa-magnifying-glass-chart text-4xl mb-3 opacity-40"></i>
               <p class="font-medium text-slate-600 dark:text-slate-300">No File Selected</p>
               <p class="text-xs text-slate-400 mt-1 max-w-sm text-center">Pick any file from the explorer on the left to review security flaws, line numbers, and Big-O performance metrics.</p>
@@ -597,15 +646,15 @@
             </div>
 
             <!-- Subtab Content: Source Code -->
-            <div id="pane-code" class="hidden space-y-3">
-              <div class="flex items-center justify-between text-xs text-slate-500">
+            <div id="pane-code" class="hidden h-full flex flex-col space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-500 shrink-0">
                 <span>Source Code Viewer</span>
                 <button onclick="copyActiveCode()" class="text-blue-600 hover:underline flex items-center space-x-1">
                   <i class="fa-regular fa-copy"></i>
                   <span>Copy Code</span>
                 </button>
               </div>
-              <pre class="rounded-2xl p-4 bg-slate-900 text-slate-100 overflow-x-auto text-xs font-mono max-h-[500px] border border-slate-700 shadow-inner"><code id="code-viewer-block" class="language-python">// Source code will be displayed here</code></pre>
+              <pre class="flex-1 rounded-2xl p-4 bg-slate-900 text-slate-100 overflow-auto text-xs font-mono border border-slate-700 shadow-inner min-h-[300px]"><code id="code-viewer-block" class="language-python">// Source code will be displayed here</code></pre>
             </div>
           </div>
 
@@ -618,26 +667,39 @@
     <!-- ======================================================================= -->
     <!-- 3. CLI DOCUMENTATION & DOWNLOADS PORTAL (#cli-docs-view) -->
     <!-- ======================================================================= -->
-    <div id="cli-docs-view" class="view-panel hidden space-y-8 py-4">
+    <div id="cli-docs-view" class="view-panel hidden space-y-6 py-2 sm:py-4">
       
       <!-- Documentation Hero Header -->
-      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 rounded-3xl p-8 text-white space-y-4 shadow-lg">
+      <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 rounded-3xl p-6 sm:p-8 text-white space-y-3 shadow-lg">
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold backdrop-blur">
           <i class="fa-solid fa-terminal"></i>
           <span>Official Developer CLI Guide</span>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">CodeAuditAI Command-Line Interface</h1>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">CodeAuditAI Command-Line Interface</h1>
         <p class="text-xs sm:text-sm text-emerald-100 max-w-2xl leading-relaxed">
           Automate security checks in your terminal, git hooks, and CI/CD pipelines. 
           Generate instant OASIS SARIF v2.1.0 reports, rich colored audit tables, and executive scorecards with zero overhead.
         </p>
       </div>
 
+      <!-- Mobile/Tablet Sticky Horizontal Jump Bar (< lg) -->
+      <div class="lg:hidden sticky top-16 z-30 bg-white/95 dark:bg-[#1e1f20]/95 backdrop-blur-md py-2 border-b border-google-greyBorder dark:border-google-darkBorder overflow-x-auto no-scrollbar flex items-center space-x-1.5 px-1 text-xs">
+        <a href="#cli-quickstart" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">01. Quickstart</a>
+        <a href="#cli-installation" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">02. Install</a>
+        <a href="#cli-command-web" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">03. Web</a>
+        <a href="#cli-command-audit" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">04. Audit</a>
+        <a href="#cli-command-snippet" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">05. Snippet</a>
+        <a href="#cli-command-languages" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">06. Languages</a>
+        <a href="#cli-command-projects" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">07. Projects</a>
+        <a href="#cli-cicd" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">08. CI/CD</a>
+        <a href="#cli-byok-env" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0">09. Keys</a>
+      </div>
+
       <!-- 2-Column Documentation Workspace (Sidebar + Content) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         
-        <!-- Left Sticky Sidebar (3 cols) -->
-        <div class="lg:col-span-3 sticky top-24 bg-white dark:bg-google-darkCard p-4 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder space-y-4 google-shadow-1 text-xs">
+        <!-- Left Sticky Sidebar (Desktop only) -->
+        <div class="hidden lg:block lg:col-span-3 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white dark:bg-google-darkCard p-4 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder space-y-3 google-shadow-1 text-xs">
           <div class="font-bold uppercase tracking-wider text-google-greyText dark:text-slate-400 pb-2 border-b border-slate-100 dark:border-google-darkBorder">
             CLI Documentation
           </div>
@@ -655,12 +717,12 @@
           </nav>
         </div>
 
-        <!-- Main Documentation Content (9 cols) -->
-        <div class="lg:col-span-9 space-y-12 bg-white dark:bg-google-darkCard p-6 sm:p-10 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 text-xs sm:text-sm">
+        <!-- Main Documentation Content -->
+        <div class="lg:col-span-9 space-y-10 bg-white dark:bg-google-darkCard p-5 sm:p-8 rounded-3xl border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 text-xs sm:text-sm min-w-0">
           
           <!-- Section 1: Quickstart -->
           <section id="cli-quickstart" class="space-y-4">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
               <span class="text-emerald-500 font-mono">01.</span>
               <span>Quick Start</span>
             </h2>
@@ -668,7 +730,7 @@
               CodeAuditAI ships with an executable runner `codeaudit` that automatically handles environment activation, dependency verification, and multi-agent execution.
             </p>
 
-            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700 shadow-inner">
+            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700 shadow-inner overflow-x-auto">
               <div class="text-slate-400"># 1. Audit any public or private GitHub repository</div>
               <div class="text-emerald-400 font-bold">$ codeaudit audit https://github.com/owner/repository --export-sarif findings.sarif</div>
               <div class="text-slate-400 pt-2"># 2. Audit a local project directory with markdown report</div>
@@ -680,20 +742,20 @@
 
           <!-- Section 2: Installation -->
           <section id="cli-installation" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
               <span class="text-emerald-500 font-mono">02.</span>
               <span>Installation & Download Options</span>
             </h2>
 
             <div class="space-y-4">
               <h3 class="font-bold text-slate-800 dark:text-slate-200">Option A: 1-Line Automatic Installer (Recommended)</h3>
-              <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-emerald-400 flex items-center justify-between border border-slate-700">
+              <div class="bg-slate-900 rounded-2xl p-3 sm:p-4 font-mono text-xs text-emerald-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-700">
                 <span class="truncate">curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash</span>
-                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash'); showToast('Copied curl install command!');" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-lg ml-2 font-sans font-semibold">Copy</button>
+                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/Suraj-8300/CodeAuditAI/main/install.sh | bash'); showToast('Copied curl install command!');" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-lg font-sans font-semibold shrink-0">Copy</button>
               </div>
 
               <h3 class="font-bold text-slate-800 dark:text-slate-200 pt-2">Option B: Git Clone & Editable Install</h3>
-              <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700">
+              <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-1.5 border border-slate-700 overflow-x-auto">
                 <div class="text-slate-400">git clone https://github.com/Suraj-8300/CodeAuditAI.git</div>
                 <div class="text-slate-400">cd CodeAuditAI</div>
                 <div class="text-slate-400">python3 -m venv .venv && source .venv/bin/activate</div>
@@ -704,55 +766,60 @@
 
           <!-- Section 3: Commands Reference -->
           <section id="cli-command-web" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
               <span class="text-blue-500 font-mono">03.</span>
               <span>Command: <code>codeaudit web</code></span>
             </h2>
             <p class="text-google-greyText dark:text-slate-300">
               Starts the high-performance FastAPI server and launches the interactive single-page Web Review Studio in your default browser.
             </p>
-            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700">
+            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700 overflow-x-auto">
               <span class="text-emerald-400 font-bold">$ codeaudit web --port 8000 --reload</span>
             </div>
           </section>
 
           <section id="cli-command-audit" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
               <span class="text-blue-500 font-mono">04.</span>
               <span>Command: <code>codeaudit audit</code></span>
             </h2>
             <p class="text-google-greyText dark:text-slate-300">
               Runs full repository analysis on a local path or remote GitHub URL with automatic cloning and caching.
             </p>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-google-darkBorder">
               <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr class="border-b border-slate-200 dark:border-google-darkBorder text-slate-500 font-semibold">
-                    <th class="py-2 pr-4">Flag</th>
-                    <th class="py-2 pr-4">Type</th>
-                    <th class="py-2">Description</th>
+                  <tr class="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-google-darkBorder">
+                    <th class="py-2.5 px-3">Flag</th>
+                    <th class="py-2.5 px-3">Type</th>
+                    <th class="py-2.5 px-3">Description</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-google-darkBorder font-mono">
                   <tr>
-                    <td class="py-2.5 font-bold text-blue-600">target</td>
-                    <td class="py-2.5 text-slate-400">string</td>
-                    <td class="py-2.5 text-slate-700 dark:text-slate-300 font-sans">GitHub URL (https://github.com/...) or local directory path.</td>
+                    <td class="py-2.5 px-3 font-bold text-blue-600">target</td>
+                    <td class="py-2.5 px-3 text-slate-400">string</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">GitHub URL or local directory path.</td>
                   </tr>
                   <tr>
-                    <td class="py-2.5 font-bold text-blue-600">--all</td>
-                    <td class="py-2.5 text-slate-400">flag</td>
-                    <td class="py-2.5 text-slate-700 dark:text-slate-300 font-sans">Audit all indexed source files instead of High-importance only.</td>
+                    <td class="py-2.5 px-3 font-bold text-blue-600">--all</td>
+                    <td class="py-2.5 px-3 text-slate-400">flag</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">Audit all source files instead of High-importance only.</td>
                   </tr>
                   <tr>
-                    <td class="py-2.5 font-bold text-blue-600">--export-md</td>
-                    <td class="py-2.5 text-slate-400">path</td>
-                    <td class="py-2.5 text-slate-700 dark:text-slate-300 font-sans">Save executive markdown scorecard (e.g. audit.md).</td>
+                    <td class="py-2.5 px-3 font-bold text-blue-600">--export-md</td>
+                    <td class="py-2.5 px-3 text-slate-400">path</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">Save executive markdown scorecard (e.g. audit.md).</td>
                   </tr>
                   <tr>
-                    <td class="py-2.5 font-bold text-blue-600">--export-sarif</td>
-                    <td class="py-2.5 text-slate-400">path</td>
-                    <td class="py-2.5 text-slate-700 dark:text-slate-300 font-sans">Save OASIS SARIF v2.1.0 output for GitHub Security.</td>
+                    <td class="py-2.5 px-3 font-bold text-blue-600">--export-sarif</td>
+                    <td class="py-2.5 px-3 text-slate-400">path</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">Save OASIS SARIF v2.1.0 findings JSON for GitHub Security.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 px-3 font-bold text-blue-600">--provider</td>
+                    <td class="py-2.5 px-3 text-slate-400">choice</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">Override LLM provider (google, claude, openai, deepseek).</td>
                   </tr>
                 </tbody>
               </table>
@@ -760,49 +827,68 @@
           </section>
 
           <section id="cli-command-snippet" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
               <span class="text-blue-500 font-mono">05.</span>
               <span>Command: <code>codeaudit snippet</code></span>
             </h2>
             <p class="text-google-greyText dark:text-slate-300">
-              Audit standalone code strings or files directly from the command line without creating a project repository.
+              Audit isolated code strings directly in the shell without touching your project directory.
             </p>
-            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700">
-              <div class="text-emerald-400 font-bold">$ codeaudit snippet --lang c "char b[8]; strcpy(b, input);"</div>
-              <div class="text-emerald-400 font-bold">$ codeaudit snippet --file script.py --lang python</div>
+            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700 overflow-x-auto">
+              <div class="text-slate-400"># Audit raw Python snippet for SQL injection</div>
+              <div class="text-emerald-400 font-bold">$ codeaudit snippet --lang python "db.execute(f'SELECT * FROM u WHERE id={uid}')"</div>
+              <div class="text-slate-400 pt-2"># Audit C string for buffer overflow</div>
+              <div class="text-emerald-400 font-bold">$ codeaudit snippet --lang c "char b[16]; strcpy(b, src);"</div>
+            </div>
+          </section>
+
+          <section id="cli-command-languages" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+              <span class="text-blue-500 font-mono">06.</span>
+              <span>Command: <code>codeaudit languages</code></span>
+            </h2>
+            <p class="text-google-greyText dark:text-slate-300">
+              Prints the full Rich terminal matrix of all 25+ supported languages, recognized file extensions, and custom vulnerability rules.
+            </p>
+            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 border border-slate-700 overflow-x-auto">
+              <span class="text-emerald-400 font-bold">$ codeaudit languages</span>
             </div>
           </section>
 
           <section id="cli-command-projects" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
-              <span class="text-blue-500 font-mono">06.</span>
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+              <span class="text-blue-500 font-mono">07.</span>
               <span>Command: <code>codeaudit projects</code></span>
             </h2>
             <p class="text-google-greyText dark:text-slate-300">
-              List all indexed codebases, review audited file counts, or delete cached repositories.
+              Lists and manages all previously audited codebases indexed in the local SQLite database.
             </p>
-            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700">
+            <div class="bg-slate-900 rounded-2xl p-4 font-mono text-xs text-slate-100 space-y-2 border border-slate-700 overflow-x-auto">
+              <div class="text-slate-400"># List all indexed projects with file counts and status</div>
               <div class="text-emerald-400 font-bold">$ codeaudit projects</div>
-              <div class="text-emerald-400 font-bold">$ codeaudit projects --delete /path/to/project</div>
+              <div class="text-slate-400 pt-2"># Delete a project and purge its cached audits</div>
+              <div class="text-emerald-400 font-bold">$ codeaudit projects --delete /absolute/path/to/project</div>
             </div>
           </section>
 
-          <!-- Section 8: CI/CD -->
+          <!-- Section 8: CI/CD Integration -->
           <section id="cli-cicd" class="space-y-4 pt-6 border-t border-slate-100 dark:border-google-darkBorder">
-            <h2 class="text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
-              <span class="text-purple-500 font-mono">07.</span>
-              <span>GitHub Actions CI/CD Workflow</span>
+            <h2 class="text-lg sm:text-xl font-bold text-[#202124] dark:text-white flex items-center space-x-2">
+              <span class="text-purple-500 font-mono">08.</span>
+              <span>CI/CD Integration: GitHub Actions</span>
             </h2>
             <p class="text-google-greyText dark:text-slate-300">
-              Add `.github/workflows/codeaudit.yml` to your repository to automatically run CodeAuditAI on Pull Requests and upload SARIF alerts directly into GitHub Security:
+              Drop this workflow file into <code>.github/workflows/audit.yml</code> to automatically gate pull requests and post findings directly into your GitHub Security tab.
             </p>
 
-            <pre class="rounded-2xl p-4 bg-slate-900 text-slate-100 overflow-x-auto text-xs font-mono border border-slate-700 shadow-inner"><code>name: CodeAuditAI Security Gate
+            <pre class="bg-slate-900 text-slate-100 p-4 rounded-2xl text-xs font-mono overflow-x-auto border border-slate-700 shadow-inner"><code>name: CodeAuditAI Gate
 on: [push, pull_request]
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -816,7 +902,7 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           codeaudit audit . --all --export-sarif findings.sarif
-      - name: Upload SARIF to GitHub Security
+      - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: findings.sarif</code></pre>
@@ -830,14 +916,14 @@ jobs:
     <!-- ======================================================================= -->
     <!-- 4. SNIPPET SANDBOX VIEW (#snippet-view) -->
     <!-- ======================================================================= -->
-    <div id="snippet-view" class="view-panel hidden space-y-6">
-      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-google-greyBorder dark:border-google-darkBorder">
+    <div id="snippet-view" class="view-panel hidden flex-1 flex flex-col space-y-4 min-h-0">
+      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-4 sm:p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 flex-1 flex flex-col min-h-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-google-greyBorder dark:border-google-darkBorder shrink-0">
           <div>
-            <h2 class="text-base font-bold text-[#202124] dark:text-white">Snippet Sandbox Playground</h2>
+            <h2 class="text-sm sm:text-base font-bold text-[#202124] dark:text-white">Snippet Sandbox Playground</h2>
             <p class="text-xs text-google-greyText dark:text-slate-400">Instantly audit raw polyglot code snippets in memory without creating a repository.</p>
           </div>
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-2 shrink-0">
             <select id="snippet-lang" onchange="loadSampleSnippet()" class="bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-3 py-1.5 text-xs font-mono text-[#202124] dark:text-slate-200">
               <option value="python">Python</option>
               <option value="c">C</option>
@@ -847,24 +933,24 @@ jobs:
               <option value="html">HTML</option>
               <option value="css">CSS</option>
             </select>
-            <button onclick="runSnippetAudit()" id="btn-audit-snippet" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-blue-500/20">
-              <i class="fa-solid fa-play"></i>
-              <span>Audit Snippet</span>
+            <button onclick="runSnippetAudit()" id="btn-audit-snippet" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3.5 py-1.5 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-blue-500/20 shrink-0">
+              <i class="fa-solid fa-play text-[10px]"></i>
+              <span>Audit</span>
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
-          <div class="lg:col-span-6 space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-400">Source Code</label>
-            <textarea id="snippet-code" rows="14" class="w-full bg-slate-900 text-slate-100 font-mono text-xs p-4 rounded-2xl border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed shadow-inner"></textarea>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 pt-4 flex-1 min-h-0">
+          <div class="flex flex-col space-y-1.5 h-64 sm:h-80 lg:h-full min-h-0">
+            <label class="text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-400 shrink-0">Source Code</label>
+            <textarea id="snippet-code" class="flex-1 w-full bg-slate-900 text-slate-100 font-mono text-xs p-4 rounded-2xl border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed shadow-inner resize-none min-h-0"></textarea>
           </div>
-          <div class="lg:col-span-6 space-y-2">
-            <div class="flex items-center justify-between">
+          <div class="flex flex-col space-y-1.5 h-64 sm:h-80 lg:h-full min-h-0">
+            <div class="flex items-center justify-between shrink-0">
               <label class="text-xs font-semibold uppercase tracking-wider text-google-greyText dark:text-slate-400">Findings & Patches</label>
               <span id="snippet-badge" class="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">Idle</span>
             </div>
-            <div id="snippet-results" class="bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-4 overflow-y-auto max-h-[340px] text-xs leading-relaxed prose dark:prose-invert">
+            <div id="snippet-results" class="flex-1 bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-4 overflow-y-auto text-xs leading-relaxed prose dark:prose-invert max-w-none min-h-0">
               <p class="text-slate-400">Run an audit to see security and performance scorecards.</p>
             </div>
           </div>
@@ -875,26 +961,26 @@ jobs:
     <!-- ======================================================================= -->
     <!-- 5. EXECUTIVE REPORTS VIEW (#reports-view) -->
     <!-- ======================================================================= -->
-    <div id="reports-view" class="view-panel hidden space-y-6">
-      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-google-greyBorder dark:border-google-darkBorder">
+    <div id="reports-view" class="view-panel hidden flex-1 flex flex-col space-y-4 min-h-0">
+      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-4 sm:p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1 flex-1 flex flex-col min-h-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-google-greyBorder dark:border-google-darkBorder shrink-0">
           <div>
-            <h2 class="text-base font-bold text-[#202124] dark:text-white">Executive Compliance & Audit Reports</h2>
+            <h2 class="text-sm sm:text-base font-bold text-[#202124] dark:text-white">Executive Compliance & Audit Reports</h2>
             <p class="text-xs text-google-greyText dark:text-slate-400">1-click downloads for OASIS SARIF v2.1.0 and Markdown compliance scorecards.</p>
           </div>
-          <div class="flex items-center space-x-2">
-            <button onclick="downloadReport('markdown')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
+          <div class="flex items-center space-x-2 shrink-0">
+            <button onclick="downloadReport('markdown')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
               <i class="fa-solid fa-file-arrow-down"></i>
-              <span>Download Markdown</span>
+              <span>Download MD</span>
             </button>
-            <button onclick="downloadReport('sarif')" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
+            <button onclick="downloadReport('sarif')" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
               <i class="fa-solid fa-shield-virus"></i>
-              <span>Download SARIF v2.1</span>
+              <span>Download SARIF</span>
             </button>
           </div>
         </div>
 
-        <div id="report-preview-content" class="bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-6 overflow-y-auto max-h-[600px] text-xs leading-relaxed prose dark:prose-invert mt-4">
+        <div id="report-preview-content" class="flex-1 bg-google-greySurface dark:bg-[#1a1b1e] rounded-2xl border border-google-greyBorder dark:border-google-darkBorder p-4 sm:p-6 overflow-y-auto text-xs leading-relaxed prose dark:prose-invert max-w-none mt-3 min-h-[350px]">
           <p class="text-slate-400">Loading executive report preview...</p>
         </div>
       </div>
@@ -903,13 +989,13 @@ jobs:
     <!-- ======================================================================= -->
     <!-- 6. LANGUAGES MATRIX VIEW (#languages-view) -->
     <!-- ======================================================================= -->
-    <div id="languages-view" class="view-panel hidden space-y-6">
-      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1">
-        <div class="pb-4 border-b border-google-greyBorder dark:border-google-darkBorder">
-          <h2 class="text-base font-bold text-[#202124] dark:text-white">Supported Polyglot Matrix (25+ Languages)</h2>
+    <div id="languages-view" class="view-panel hidden space-y-4">
+      <div class="bg-white dark:bg-google-darkCard rounded-3xl p-4 sm:p-6 border border-google-greyBorder dark:border-google-darkBorder google-shadow-1">
+        <div class="pb-3 border-b border-google-greyBorder dark:border-google-darkBorder">
+          <h2 class="text-sm sm:text-base font-bold text-[#202124] dark:text-white">Supported Polyglot Matrix (25+ Languages)</h2>
           <p class="text-xs text-google-greyText dark:text-slate-400">Every language features tailored AST rule splitters and specialized security/performance audit heuristics.</p>
         </div>
-        <div id="languages-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+        <div id="languages-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-4">
           <!-- Populated by JavaScript -->
         </div>
       </div>
@@ -920,25 +1006,25 @@ jobs:
   <!-- ========================================================================= -->
   <!-- BYOK (BRING YOUR OWN KEY) MODAL -->
   <!-- ========================================================================= -->
-  <div id="byok-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder max-w-xl w-full p-6 space-y-5 google-shadow-3 text-xs sm:text-sm">
+  <div id="byok-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white dark:bg-google-darkCard rounded-3xl border border-google-greyBorder dark:border-google-darkBorder max-w-xl w-full p-5 sm:p-6 space-y-4 google-shadow-3 text-xs sm:text-sm max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-google-greyBorder dark:border-google-darkBorder">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-key text-blue-600"></i>
-          <h3 class="text-base font-bold text-[#202124] dark:text-white">BYOK (Bring Your Own Key) Settings</h3>
+          <h3 class="text-sm sm:text-base font-bold text-[#202124] dark:text-white">BYOK (Bring Your Own Key) Settings</h3>
         </div>
-        <button onclick="closeBYOKModal()" class="text-slate-400 hover:text-black dark:hover:text-white text-base">
+        <button onclick="closeBYOKModal()" class="text-slate-400 hover:text-black dark:hover:text-white text-base w-8 h-8 rounded-full flex items-center justify-center">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <!-- Provider Tabs -->
-      <div class="grid grid-cols-5 gap-2">
-        <button onclick="selectBYOKProvider('aistudio')" id="btn-provider-aistudio" class="byok-provider-btn p-2 rounded-xl border border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-center font-bold text-blue-600 dark:text-blue-400">AI Studio</button>
-        <button onclick="selectBYOKProvider('claude')" id="btn-provider-claude" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300">Claude</button>
-        <button onclick="selectBYOKProvider('openai')" id="btn-provider-openai" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300">OpenAI</button>
-        <button onclick="selectBYOKProvider('deepseek')" id="btn-provider-deepseek" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300">DeepSeek</button>
-        <button onclick="selectBYOKProvider('copilot')" id="btn-provider-copilot" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300">Copilot</button>
+      <!-- Provider Tabs (Responsive Grid) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+        <button onclick="selectBYOKProvider('aistudio')" id="btn-provider-aistudio" class="byok-provider-btn p-2 rounded-xl border border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-center font-bold text-blue-600 dark:text-blue-400 text-xs">AI Studio</button>
+        <button onclick="selectBYOKProvider('claude')" id="btn-provider-claude" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300 text-xs">Claude</button>
+        <button onclick="selectBYOKProvider('openai')" id="btn-provider-openai" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300 text-xs">OpenAI</button>
+        <button onclick="selectBYOKProvider('deepseek')" id="btn-provider-deepseek" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300 text-xs">DeepSeek</button>
+        <button onclick="selectBYOKProvider('copilot')" id="btn-provider-copilot" class="byok-provider-btn p-2 rounded-xl border border-slate-200 dark:border-google-darkBorder bg-slate-50 dark:bg-slate-800 text-center text-slate-600 dark:text-slate-300 text-xs">Copilot</button>
       </div>
 
       <!-- Config Form -->
@@ -947,31 +1033,33 @@ jobs:
           <div class="flex items-center justify-between mb-1.5">
             <label class="text-xs font-semibold text-slate-700 dark:text-slate-300" id="byok-label-provider">Google AI Studio API Key</label>
             <a id="byok-docs-link" href="https://aistudio.google.com" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center space-x-1">
-              <span>Get Free Key at Google AI Studio</span>
+              <span>Get Free Key</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
           </div>
-          <input type="password" id="byok-input-key" placeholder="Paste your API key here..." class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-4 py-2 text-xs font-mono">
-          <p id="byok-key-status" class="text-[11px] text-slate-500 mt-1">Current Key: Configured</p>
+          <input type="password" id="byok-input-key" placeholder="Enter API Key (leave empty to keep current)"
+            class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-3 py-2 text-xs font-mono text-[#202124] dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500">
+          <p id="byok-key-status" class="text-[11px] text-slate-400 mt-1 font-mono">Current Key: Not Configured</p>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Model Name</label>
-          <select id="byok-select-model" class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-3 py-2 text-xs font-mono"></select>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Model Selection</label>
+          <select id="byok-select-model" class="w-full bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder rounded-xl px-3 py-2 text-xs font-mono text-[#202124] dark:text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer">
+            <!-- Populated dynamically -->
+          </select>
         </div>
 
-        <div id="byok-test-result" class="hidden p-3 rounded-xl text-xs font-mono"></div>
-      </div>
+        <div id="byok-test-result" class="hidden p-3 rounded-xl text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"></div>
 
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-between pt-4 border-t border-google-greyBorder dark:border-google-darkBorder">
-        <button onclick="testBYOKKey()" id="btn-test-byok" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center space-x-1.5">
-          <i class="fa-solid fa-bolt text-amber-500"></i>
-          <span>Test Connection</span>
-        </button>
-        <div class="flex items-center space-x-2">
-          <button onclick="closeBYOKModal()" class="text-xs text-slate-500 hover:text-black dark:hover:text-white px-3 py-2">Cancel</button>
-          <button onclick="saveBYOKConfig()" id="btn-save-byok" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-md transition">Save & Activate</button>
+        <div class="flex items-center justify-between pt-3 border-t border-google-greyBorder dark:border-google-darkBorder">
+          <button onclick="testBYOKKey()" id="btn-test-byok" class="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white border border-google-greyBorder dark:border-google-darkBorder flex items-center space-x-1.5 transition">
+            <i class="fa-solid fa-bolt text-amber-500"></i>
+            <span>Test Connection</span>
+          </button>
+          <div class="flex items-center space-x-2">
+            <button onclick="closeBYOKModal()" class="text-xs font-semibold px-4 py-2 rounded-xl text-slate-500 hover:text-black dark:hover:text-white transition">Cancel</button>
+            <button onclick="saveBYOKConfig()" id="btn-save-byok" class="text-xs font-semibold px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">Save & Apply</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1042,13 +1130,33 @@ jobs:
       }
     }
 
+    // Mobile Menu Handlers
+    function toggleMobileMenu() {
+      const drawer = document.getElementById('mobile-nav-drawer');
+      const icon = document.getElementById('mobile-menu-icon');
+      if (drawer.classList.contains('hidden')) {
+        drawer.classList.remove('hidden');
+        icon.className = 'fa-solid fa-xmark text-sm';
+      } else {
+        drawer.classList.add('hidden');
+        icon.className = 'fa-solid fa-bars text-sm';
+      }
+    }
+
+    function closeMobileMenu() {
+      const drawer = document.getElementById('mobile-nav-drawer');
+      const icon = document.getElementById('mobile-menu-icon');
+      if (drawer) drawer.classList.add('hidden');
+      if (icon) icon.className = 'fa-solid fa-bars text-sm';
+    }
+
     // View Switching Router
     function switchView(viewId) {
       document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
       const targetPanel = document.getElementById(`${viewId}-view`);
       if (targetPanel) targetPanel.classList.remove('hidden');
 
-      // Update Nav Buttons
+      // Update Desktop Nav Buttons
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-950/60', 'font-semibold');
         btn.classList.add('text-google-greyText', 'dark:text-slate-300');
@@ -1059,6 +1167,9 @@ jobs:
         activeBtn.classList.remove('text-google-greyText', 'dark:text-slate-300');
         activeBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-950/60', 'font-semibold');
       }
+
+      // Close mobile drawer when view switches
+      closeMobileMenu();
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (viewId === 'reports' && currentRepoData) renderExecutiveReportPreview();
@@ -1116,7 +1227,7 @@ jobs:
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Analyzing with Tri-Agent Consensus...</span>';
       status.innerText = 'Analyzing...';
-      status.className = 'px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-mono font-bold';
+      status.className = 'px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-mono font-bold text-[11px]';
 
       try {
         const res = await fetch('/analyze-snippet', {
@@ -1128,7 +1239,7 @@ jobs:
         const data = await res.json();
         
         status.innerText = 'Reconciled';
-        status.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-mono font-bold';
+        status.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-mono font-bold text-[11px]';
 
         const markdown = `
 ### 🛡️ Security Auditor Findings
@@ -1305,13 +1416,13 @@ ${data.audit_results.performance_analysis}
 
       if (files.length === 0) {
         if (currentRepoData) {
-          container.innerHTML = '<div class="text-center py-12 text-slate-400"><i class="fa-solid fa-magnifying-glass text-2xl mb-2 block opacity-40"></i>No matching files found.</div>';
+          container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xl mb-1.5 block opacity-40"></i>No matching files found.</div>';
         } else {
           container.innerHTML = `
-            <div class="text-center py-12 px-3 text-slate-400">
-              <i class="fa-solid fa-folder-open text-3xl mb-3 block text-slate-400"></i>
+            <div class="text-center py-8 px-2 text-slate-400">
+              <i class="fa-solid fa-folder-open text-2xl mb-2 block text-slate-400"></i>
               <p class="font-medium text-slate-700 dark:text-slate-300 text-xs">No Project Selected</p>
-              <p class="text-[11px] mt-1 text-slate-400 leading-relaxed">Choose an indexed project from the dropdown above, or enter a GitHub URL / local path to start.</p>
+              <p class="text-[10px] sm:text-[11px] mt-1 text-slate-400 leading-relaxed">Choose an indexed project from the dropdown above, or enter a GitHub URL / local path to start.</p>
             </div>
           `;
         }
@@ -1325,15 +1436,15 @@ ${data.audit_results.performance_analysis}
         else if (file.importance === 'Medium') impColor = 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
 
         const item = document.createElement('div');
-        item.className = 'p-2.5 rounded-xl bg-slate-50 dark:bg-[#1a1b1e] hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/80 dark:border-google-darkBorder transition cursor-pointer flex items-center justify-between group';
+        item.className = 'p-2 sm:p-2.5 rounded-xl bg-slate-50 dark:bg-[#1a1b1e] hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-slate-200/80 dark:border-google-darkBorder transition cursor-pointer flex items-center justify-between group';
         item.onclick = () => selectFile(file);
 
         item.innerHTML = `
           <div class="flex items-center space-x-2 truncate pr-2">
-            <i class="fa-solid fa-file-code text-slate-400 group-hover:text-blue-600 transition"></i>
-            <span class="truncate font-mono text-slate-700 dark:text-slate-200" title="${file.file_path}">${fileName}</span>
+            <i class="fa-solid fa-file-code text-slate-400 group-hover:text-blue-600 transition text-xs"></i>
+            <span class="truncate font-mono text-slate-700 dark:text-slate-200 text-xs" title="${file.file_path}">${fileName}</span>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${impColor}">${file.importance || 'Med'}</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold shrink-0 ${impColor}">${file.importance || 'Med'}</span>
         `;
         container.appendChild(item);
       });
@@ -1365,11 +1476,11 @@ ${data.audit_results.performance_analysis}
           const data = await res.json();
           displayAuditResults(data.audit.security_report, data.audit.performance_report);
           document.getElementById('active-file-status').innerText = 'Audited (Cached)';
-          document.getElementById('active-file-status').className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold';
+          document.getElementById('active-file-status').className = 'px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold text-[10px]';
         } else {
           displayPendingAudit();
           document.getElementById('active-file-status').innerText = 'Audit Pending';
-          document.getElementById('active-file-status').className = 'px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500';
+          document.getElementById('active-file-status').className = 'px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px]';
         }
       } catch (err) {
         displayPendingAudit();
@@ -1378,6 +1489,12 @@ ${data.audit_results.performance_analysis}
       document.getElementById('code-viewer-block').textContent = '// File: ' + file.file_path + '\n// Role: ' + (file.summary || 'Source code module');
       Prism.highlightElement(document.getElementById('code-viewer-block'));
       switchInspectorTab(activeInspectorTab);
+
+      // On mobile screens, scroll smoothly down to inspector
+      if (window.innerWidth < 1024) {
+        const inspectorEl = document.getElementById('inspector-content');
+        if (inspectorEl) inspectorEl.scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
     async function runAuditActiveFile() {
@@ -1392,33 +1509,37 @@ ${data.audit_results.performance_analysis}
         const data = await res.json();
         displayAuditResults(data.audit_results.security_analysis, data.audit_results.performance_analysis);
         document.getElementById('active-file-status').innerText = 'Audited Just Now';
-        document.getElementById('active-file-status').className = 'px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold';
+        document.getElementById('active-file-status').className = 'px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold text-[10px]';
         showToast('Audit complete for ' + activeFileRecord.file_path.split('/').pop());
       } catch (err) {
         showToast(err.message, 'fa-circle-xmark', 'text-red-500');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-play"></i><span>Re-Audit</span>';
+        btn.innerHTML = '<i class="fa-solid fa-play text-[10px]"></i><span>Audit Now</span>';
       }
     }
 
-    function displayAuditResults(secMd, perfMd) {
-      document.getElementById('audit-security-container').innerHTML = marked.parse(secMd || 'No security data');
-      document.getElementById('audit-performance-container').innerHTML = marked.parse(perfMd || 'No performance data');
+    function displayAuditResults(secMarkdown, perfMarkdown) {
+      document.getElementById('audit-security-container').innerHTML = marked.parse(secMarkdown || 'No security findings recorded.');
+      document.getElementById('audit-performance-container').innerHTML = marked.parse(perfMarkdown || 'No performance bottlenecks recorded.');
       Prism.highlightAll();
     }
 
     function displayPendingAudit() {
       document.getElementById('audit-security-container').innerHTML = `
-        <div class="text-center py-12 text-slate-400">
-          <i class="fa-solid fa-shield-halved text-3xl mb-2 opacity-50 block"></i>
-          <p>This file has not been audited yet.</p>
-          <button onclick="runAuditActiveFile()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-xl text-xs transition">
-            Run Multi-Agent Audit
-          </button>
+        <div class="p-6 text-center text-slate-400">
+          <i class="fa-solid fa-clock text-3xl mb-2 block opacity-40"></i>
+          <p class="font-medium text-slate-700 dark:text-slate-300">Audit Not Yet Run</p>
+          <p class="text-xs text-slate-400 mt-1">Click the 'Audit Now' button above to execute the LangGraph multi-agent review on this file.</p>
         </div>
       `;
-      document.getElementById('audit-performance-container').innerHTML = `<p class="text-slate-400">Audit pending.</p>`;
+      document.getElementById('audit-performance-container').innerHTML = `
+        <div class="p-6 text-center text-slate-400">
+          <i class="fa-solid fa-bolt text-3xl mb-2 block opacity-40"></i>
+          <p class="font-medium text-slate-700 dark:text-slate-300">Awaiting Performance Analysis</p>
+          <p class="text-xs text-slate-400 mt-1">Algorithmic complexity will be calculated when the audit runs.</p>
+        </div>
+      `;
     }
 
     function displayNoFileSelected() {
@@ -1426,6 +1547,7 @@ ${data.audit_results.performance_analysis}
       document.getElementById('inspector-placeholder').classList.remove('hidden');
       document.getElementById('btn-run-file-audit').classList.add('hidden');
       document.getElementById('active-file-title').innerText = 'Select a file to inspect';
+      document.getElementById('active-file-title').title = '';
       document.getElementById('active-file-lang').innerText = 'None';
       document.getElementById('active-file-status').innerText = 'Idle';
       document.getElementById('pane-audit').classList.add('hidden');
@@ -1433,20 +1555,30 @@ ${data.audit_results.performance_analysis}
       document.getElementById('pane-code').classList.add('hidden');
     }
 
-    function switchInspectorTab(subtab) {
-      activeInspectorTab = subtab;
-      document.querySelectorAll('#pane-audit, #pane-performance, #pane-code').forEach(p => p.classList.add('hidden'));
-      document.querySelectorAll('#subtab-audit, #subtab-performance, #subtab-code').forEach(b => {
-        b.classList.remove('bg-white', 'dark:bg-google-darkCard', 'text-blue-600', 'dark:text-blue-400', 'shadow-sm', 'font-semibold');
-        b.classList.add('text-google-greyText', 'dark:text-slate-400');
+    function switchInspectorTab(tabId) {
+      activeInspectorTab = tabId;
+      document.getElementById('pane-audit').classList.add('hidden');
+      document.getElementById('pane-performance').classList.add('hidden');
+      document.getElementById('pane-code').classList.add('hidden');
+
+      ['audit', 'performance', 'code'].forEach(t => {
+        const btn = document.getElementById(`subtab-${t}`);
+        if (btn) {
+          btn.classList.remove('bg-white', 'dark:bg-google-darkCard', 'text-blue-600', 'dark:text-blue-400', 'shadow-sm', 'font-semibold');
+          btn.classList.add('text-google-greyText', 'dark:text-slate-400');
+        }
       });
 
-      const activeBtn = document.getElementById(`subtab-${subtab}`);
+      const activeBtn = document.getElementById(`subtab-${tabId}`);
       if (activeBtn) {
         activeBtn.classList.remove('text-google-greyText', 'dark:text-slate-400');
         activeBtn.classList.add('bg-white', 'dark:bg-google-darkCard', 'text-blue-600', 'dark:text-blue-400', 'shadow-sm', 'font-semibold');
       }
-      document.getElementById(`pane-${subtab}`).classList.remove('hidden');
+
+      if (activeFileRecord) {
+        const pane = document.getElementById(`pane-${tabId}`);
+        if (pane) pane.classList.remove('hidden');
+      }
     }
 
     function copyActiveCode() {
@@ -1456,46 +1588,42 @@ ${data.audit_results.performance_analysis}
     }
 
     // -------------------------------------------------------------------------
-    // BYOK Handlers
+    // BYOK (Bring Your Own Key) Management
     // -------------------------------------------------------------------------
+    function openBYOKModal() {
+      document.getElementById('byok-modal').classList.remove('hidden');
+      selectBYOKProvider(selectedModalProvider);
+    }
+
+    function closeBYOKModal() {
+      document.getElementById('byok-modal').classList.add('hidden');
+    }
+
     async function loadBYOKConfig() {
       try {
         const res = await fetch('/api/byok/config');
-        if (res.ok) {
-          byokState = await res.json();
-          updateBYOKUI();
-        }
+        const data = await res.json();
+        byokState = data;
+        updateBYOKUI();
       } catch (err) {
-        console.error('Failed to load BYOK config', err);
+        console.error('Failed to load BYOK configuration', err);
       }
     }
 
     function updateBYOKUI() {
       if (!byokState) return;
-      const active = byokState.active_provider;
-      const pInfo = byokState.providers ? byokState.providers[active] : null;
-      const model = byokState.active_model || (pInfo ? pInfo.current_model : '');
-
-      const badge = document.getElementById('header-active-provider');
-      if (badge && pInfo) {
-        const shortName = pInfo.name.split(' ')[0];
-        badge.innerText = `BYOK: ${shortName} (${model})`;
+      const activeProvider = byokState.active_provider;
+      const info = byokState.providers[activeProvider];
+      if (info) {
+        const headerPill = document.getElementById('header-active-provider');
+        headerPill.innerText = `${info.name.split(' ')[0]}: ${info.current_model}`;
+        selectedModalProvider = activeProvider;
       }
-    }
-
-    function openBYOKModal() {
-      document.getElementById('byok-modal').classList.remove('hidden');
-      selectBYOKProvider(byokState ? byokState.active_provider : 'aistudio');
-    }
-
-    function closeBYOKModal() {
-      document.getElementById('byok-modal').classList.add('hidden');
-      document.getElementById('byok-test-result').classList.add('hidden');
     }
 
     function selectBYOKProvider(p) {
       selectedModalProvider = p;
-      if (!byokState || !byokState.providers) return;
+      if (!byokState) return;
       const info = byokState.providers[p];
       if (!info) return;
 
@@ -1604,7 +1732,7 @@ ${data.audit_results.performance_analysis}
 
         for (const [lang, details] of Object.entries(data)) {
           const card = document.createElement('div');
-          card.className = 'p-4 rounded-2xl bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder flex flex-col justify-between';
+          card.className = 'p-3.5 sm:p-4 rounded-2xl bg-google-greySurface dark:bg-[#1e1f20] border border-google-greyBorder dark:border-google-darkBorder flex flex-col justify-between';
           card.innerHTML = `
             <div>
               <div class="flex items-center justify-between mb-2">
@@ -1705,7 +1833,7 @@ ${data.audit_results.performance_analysis}
         showToast(err.message, 'fa-circle-xmark', 'text-red-500');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-play"></i><span>Audit Snippet</span>';
+        btn.innerHTML = '<i class="fa-solid fa-play text-[10px]"></i><span>Audit</span>';
       }
     }
 
