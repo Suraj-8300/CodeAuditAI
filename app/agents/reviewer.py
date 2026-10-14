@@ -1,4 +1,5 @@
 import os
+import re
 import json
 from typing import TypedDict, List, Dict, Any
 from langgraph.graph import StateGraph, START, END
@@ -129,28 +130,72 @@ async def joint_reconciler_node(state: AuditState) -> Dict[str, Any]:
     )
 
     content = await safe_invoke(prompt)
-    content = content.strip()
-
-    # Strip markdown backticks if present despite prompt instructions
-    if content.startswith("```json"):
-        content = content[7:]
-    if content.endswith("```"):
-        content = content[:-3]
-    content = content.strip()
-
-    try:
-        data = json.loads(content)
-        sec_report = data.get("security_report", security_draft)
-        perf_report = data.get("performance_report", performance_draft)
-    except Exception as e:
-        print(f"⚠️ Warning: Failed to parse reconciled JSON ({e}). Falling back to raw drafts.")
-        sec_report = security_draft
-        perf_report = performance_draft
+    sec_report, perf_report = _parse_reconciled_json(content, security_draft, performance_draft)
 
     return {
         "security_report": sec_report,
         "performance_report": perf_report
     }
+
+
+def _parse_reconciled_json(raw: str, default_sec: str, default_perf: str) -> tuple:
+    """Robustly extracts and parses security and performance reports from LLM JSON responses."""
+    if not raw or not raw.strip():
+        return default_sec, default_perf
+
+    text = raw.strip()
+    # Strip markdown code blocks if wrapped
+    if text.startswith("```"):
+        lines = text.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    # Attempt 1: Direct JSON parse with strict=False (allows control characters)
+    try:
+        data = json.loads(text, strict=False)
+        sec = data.get("security_report")
+        perf = data.get("performance_report")
+        if sec and perf:
+            return sec, perf
+    except Exception:
+        pass
+
+    # Extract JSON object substring between outermost { and }
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    candidate = text[first_brace:last_brace + 1] if (first_brace != -1 and last_brace > first_brace) else text
+
+    # Attempt 2: Sanitize invalid escape sequences (e.g. \d, \s, \w, unescaped path backslashes)
+    try:
+        sanitized = re.sub(r'\\(?!([\"\\/bfnrt]|u[0-9a-fA-F]{4}))', r'\\\\', candidate)
+        sanitized = re.sub(r',\s*([}\]])', r'\1', sanitized)
+        data = json.loads(sanitized, strict=False)
+        sec = data.get("security_report")
+        perf = data.get("performance_report")
+        if sec and perf:
+            return sec, perf
+    except Exception:
+        pass
+
+    # Attempt 3: Regex boundary extraction if JSON was truncated or malformed
+    sec_match = re.search(r'"security_report"\s*:\s*"([\s\S]*?)(?="\s*,\s*"performance_report"|"\s*\})', candidate)
+    perf_match = re.search(r'"performance_report"\s*:\s*"([\s\S]*?)(?="\s*,\s*"security_report"|"\s*\})', candidate)
+
+    sec = default_sec
+    perf = default_perf
+    if sec_match:
+        matched = sec_match.group(1).replace(r'\"', '"').replace(r'\n', '\n')
+        if len(matched) > 20:
+            sec = matched
+    if perf_match:
+        matched = perf_match.group(1).replace(r'\"', '"').replace(r'\n', '\n')
+        if len(matched) > 20:
+            perf = matched
+
+    return sec, perf
 
 
 # --- Wiring the Collaborative Architecture ---

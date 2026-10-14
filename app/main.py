@@ -42,6 +42,15 @@ sqlite_service = SQLiteStorageService()
 vector_service = VectorStorageService()
 repo_mapper = RepositoryMapperService(sqlite_service, vector_service)
 
+# Concurrency locks per repository path to prevent duplicate overlapping audits
+_repo_locks: Dict[str, asyncio.Lock] = {}
+
+def get_repo_lock(path: str) -> asyncio.Lock:
+    norm = os.path.abspath(path)
+    if norm not in _repo_locks:
+        _repo_locks[norm] = asyncio.Lock()
+    return _repo_locks[norm]
+
 
 def calculate_file_hash(file_path: str) -> str:
     """Computes MD5 hash of a file."""
@@ -338,95 +347,97 @@ async def api_analyze_repository(
     if not os.path.exists(repo_path) or not os.path.isdir(repo_path):
         raise HTTPException(status_code=400, detail=f"Invalid repository directory: {repo_path}")
 
-    try:
-        # 1. Map and index repository
-        repo_data = await repo_mapper.map_repository(repo_path)
-        
-        # 2. Retrieve all files
-        repo_files = sqlite_service.get_repo_files(repo_path)
-        
-        audited_files_results = []
-        
-        # 3. If requested, audit High-importance files
-        if audit_high_importance:
-            high_imp_files = [f for f in repo_files if f["importance"] == "High"]
-            print(f"⚡ [Pipeline] Auditing {len(high_imp_files)} High-importance files in background...")
+    async with get_repo_lock(repo_path):
+        try:
+            # 1. Map and index repository
+            repo_data = await repo_mapper.map_repository(repo_path)
             
-            # Helper to run audit for a file (utilizes cache if clean)
-            async def audit_single_file(file_entry):
-                file_path = file_entry["file_path"]
-                try:
-                    current_hash = calculate_file_hash(file_path)
-                    cached_audit = sqlite_service.get_audit(file_path)
-                    
-                    if cached_audit and file_entry["hash"] == current_hash:
+            # 2. Retrieve all files
+            repo_files = sqlite_service.get_repo_files(repo_path)
+            
+            audited_files_results = []
+            
+            # 3. If requested, audit High-importance files
+            if audit_high_importance:
+                high_imp_files = [f for f in repo_files if f["importance"] == "High"]
+                print(f"⚡ [Pipeline] Auditing {len(high_imp_files)} High-importance files in background...")
+                
+                # Helper to run audit for a file (utilizes cache if clean)
+                async def audit_single_file(file_entry):
+                    file_path = file_entry["file_path"]
+                    try:
+                        current_hash = calculate_file_hash(file_path)
+                        cached_audit = sqlite_service.get_audit(file_path)
+                        
+                        if cached_audit and file_entry["hash"] == current_hash:
+                            return {
+                                "file_path": file_path,
+                                "summary": file_entry["summary"],
+                                "cached": True,
+                                "security_report": cached_audit["security_report"],
+                                "performance_report": cached_audit["performance_report"]
+                            }
+                        
+                        # Run full audit
+                        db_hints = vector_service.semantic_search(
+                            query=f"vulnerabilities or performance issues in {os.path.basename(file_path)}", 
+                            limit=3
+                        )
+                        context_strings = [hit["content"] for hit in db_hints]
+                        
+                        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                            source_code = f.read()
+
+                        initial_scorecard = {
+                            "file_path": file_path,
+                            "source_code": source_code,
+                            "repo_path": repo_path,
+                            "repo_map": repo_data["repo_map_string"],
+                            "retrieved_context": context_strings,
+                            "security_draft": "",
+                            "performance_draft": "",
+                            "security_report": "",
+                            "performance_report": ""
+                        }
+                        
+                        final_state = await audit_agent_app.ainvoke(initial_scorecard)
+                        sec_rep = final_state.get("security_report", "Analysis failed.")
+                        perf_rep = final_state.get("performance_report", "Analysis failed.")
+                        
+                        sqlite_service.upsert_audit(file_path, sec_rep, perf_rep)
+                        await asyncio.sleep(1.0) # Graceful pacing to preserve provider RPM limits
+                        
                         return {
                             "file_path": file_path,
                             "summary": file_entry["summary"],
-                            "cached": True,
-                            "security_report": cached_audit["security_report"],
-                            "performance_report": cached_audit["performance_report"]
+                            "cached": False,
+                            "security_report": sec_rep,
+                            "performance_report": perf_rep
                         }
-                    
-                    # Run full audit
-                    db_hints = vector_service.semantic_search(
-                        query=f"vulnerabilities or performance issues in {os.path.basename(file_path)}", 
-                        limit=3
-                    )
-                    context_strings = [hit["content"] for hit in db_hints]
-                    
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                        source_code = f.read()
-
-                    initial_scorecard = {
-                        "file_path": file_path,
-                        "source_code": source_code,
-                        "repo_path": repo_path,
-                        "repo_map": repo_data["repo_map_string"],
-                        "retrieved_context": context_strings,
-                        "security_draft": "",
-                        "performance_draft": "",
-                        "security_report": "",
-                        "performance_report": ""
-                    }
-                    
-                    final_state = await audit_agent_app.ainvoke(initial_scorecard)
-                    sec_rep = final_state.get("security_report", "Analysis failed.")
-                    perf_rep = final_state.get("performance_report", "Analysis failed.")
-                    
-                    sqlite_service.upsert_audit(file_path, sec_rep, perf_rep)
-                    
-                    return {
-                        "file_path": file_path,
-                        "summary": file_entry["summary"],
-                        "cached": False,
-                        "security_report": sec_rep,
-                        "performance_report": perf_rep
-                    }
-                except Exception as ex:
-                    return {
-                        "file_path": file_path,
-                        "summary": file_entry["summary"],
-                        "error": str(ex)
-                    }
-            
-            # Execute sequentially or with a small limit to protect rate limit bounds
-            for file_entry in high_imp_files:
-                res = await audit_single_file(file_entry)
-                audited_files_results.append(res)
+                    except Exception as ex:
+                        return {
+                            "file_path": file_path,
+                            "summary": file_entry["summary"],
+                            "error": str(ex)
+                        }
                 
-        return {
-            "status": "success",
-            "repository": repo_data["name"],
-            "path": repo_data["path"],
-            "summary": repo_data["summary"],
-            "total_files": repo_data["file_count"],
-            "repo_map": repo_data["repo_map_string"],
-            "high_importance_audits": audited_files_results
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Repository analysis failed: {str(e)}")
+                # Execute sequentially to protect rate limit bounds
+                for file_entry in high_imp_files:
+                    res = await audit_single_file(file_entry)
+                    audited_files_results.append(res)
+                    
+            return {
+                "status": "success",
+                "repository": repo_data["name"],
+                "path": repo_data["path"],
+                "summary": repo_data["summary"],
+                "total_files": repo_data["file_count"],
+                "repo_map": repo_data["repo_map_string"],
+                "high_importance_audits": audited_files_results
+            }
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Repository analysis failed: {str(e)}")
 
 
 @app.post("/analyze-github")
@@ -489,83 +500,84 @@ async def api_analyze_github(
         raise HTTPException(status_code=504, detail="Git operation timed out after 5 minutes.")
 
 
-    try:
-        repo_data = await repo_mapper.map_repository(local_repo_path)
-        repo_files = sqlite_service.get_repo_files(local_repo_path)
-        audited_files_results = []
+    async with get_repo_lock(local_repo_path):
+        try:
+            repo_data = await repo_mapper.map_repository(local_repo_path)
+            repo_files = sqlite_service.get_repo_files(local_repo_path)
+            audited_files_results = []
 
-        if audit_high_importance:
-            high_imp_files = [f for f in repo_files if f["importance"] == "High"]
-            print(f"⚡ [Pipeline] Auditing {len(high_imp_files)} High-importance files in '{repo_slug}'...")
+            if audit_high_importance:
+                high_imp_files = [f for f in repo_files if f["importance"] == "High"]
+                print(f"⚡ [Pipeline] Auditing {len(high_imp_files)} High-importance files in '{repo_slug}'...")
 
-            for file_entry in high_imp_files:
-                file_path = file_entry["file_path"]
-                try:
-                    current_hash = calculate_file_hash(file_path)
-                    cached_audit = sqlite_service.get_audit(file_path)
+                for file_entry in high_imp_files:
+                    file_path = file_entry["file_path"]
+                    try:
+                        current_hash = calculate_file_hash(file_path)
+                        cached_audit = sqlite_service.get_audit(file_path)
 
-                    if cached_audit and file_entry["hash"] == current_hash:
-                        audited_files_results.append({
+                        if cached_audit and file_entry["hash"] == current_hash:
+                            audited_files_results.append({
+                                "file_path": file_path,
+                                "summary": file_entry["summary"],
+                                "cached": True,
+                                "security_report": cached_audit["security_report"],
+                                "performance_report": cached_audit["performance_report"]
+                            })
+                            continue
+
+                        db_hints = vector_service.semantic_search(
+                            query=f"vulnerabilities or performance issues in {os.path.basename(file_path)}",
+                            limit=3
+                        )
+                        context_strings = [hit["content"] for hit in db_hints]
+
+                        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                            source_code = f.read()
+
+                        initial_scorecard = {
                             "file_path": file_path,
+                            "source_code": source_code,
+                            "repo_path": local_repo_path,
+                            "repo_map": repo_data["repo_map_string"],
+                            "retrieved_context": context_strings,
+                            "security_draft": "",
+                            "performance_draft": "",
+                            "security_report": "",
+                            "performance_report": ""
+                        }
+
+                        final_state = await audit_agent_app.ainvoke(initial_scorecard)
+                        sec_rep = final_state.get("security_report", "Analysis failed.")
+                        perf_rep = final_state.get("performance_report", "Analysis failed.")
+                        sqlite_service.upsert_audit(file_path, sec_rep, perf_rep)
+                        await asyncio.sleep(1.0) # Graceful pacing to preserve provider RPM limits
+
+                        audited_files_results.append({
+                            "file_path": os.path.relpath(file_path, local_repo_path),
                             "summary": file_entry["summary"],
-                            "cached": True,
-                            "security_report": cached_audit["security_report"],
-                            "performance_report": cached_audit["performance_report"]
+                            "cached": False,
+                            "security_report": sec_rep,
+                            "performance_report": perf_rep
                         })
-                        continue
+                    except Exception as ex:
+                        audited_files_results.append({
+                            "file_path": os.path.relpath(file_path, local_repo_path),
+                            "error": str(ex)
+                        })
 
-                    db_hints = vector_service.semantic_search(
-                        query=f"vulnerabilities or performance issues in {os.path.basename(file_path)}",
-                        limit=3
-                    )
-                    context_strings = [hit["content"] for hit in db_hints]
-
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                        source_code = f.read()
-
-                    initial_scorecard = {
-                        "file_path": file_path,
-                        "source_code": source_code,
-                        "repo_path": local_repo_path,
-                        "repo_map": repo_data["repo_map_string"],
-                        "retrieved_context": context_strings,
-                        "security_draft": "",
-                        "performance_draft": "",
-                        "security_report": "",
-                        "performance_report": ""
-                    }
-
-                    final_state = await audit_agent_app.ainvoke(initial_scorecard)
-                    sec_rep = final_state.get("security_report", "Analysis failed.")
-                    perf_rep = final_state.get("performance_report", "Analysis failed.")
-                    sqlite_service.upsert_audit(file_path, sec_rep, perf_rep)
-
-                    audited_files_results.append({
-                        "file_path": os.path.relpath(file_path, local_repo_path),
-                        "summary": file_entry["summary"],
-                        "cached": False,
-                        "security_report": sec_rep,
-                        "performance_report": perf_rep
-                    })
-                except Exception as ex:
-                    audited_files_results.append({
-                        "file_path": os.path.relpath(file_path, local_repo_path),
-                        "error": str(ex)
-                    })
-
-        return {
-            "status": "success",
-            "source": github_url,
-            "local_clone": local_repo_path,
-            "repository": repo_data["name"],
-            "summary": repo_data["summary"],
-            "total_files": repo_data["file_count"],
-            "repo_map": repo_data["repo_map_string"],
-            "high_importance_audits": audited_files_results
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"GitHub repository analysis failed: {str(e)}")
+            return {
+                "status": "success",
+                "source": github_url,
+                "local_clone": local_repo_path,
+                "repository": repo_data["name"],
+                "summary": repo_data["summary"],
+                "total_files": repo_data["file_count"],
+                "repo_map": repo_data["repo_map_string"],
+                "high_importance_audits": audited_files_results
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"GitHub repository analysis failed: {str(e)}")
 
 
 # ---------------------------------------------------------------------------
