@@ -191,6 +191,7 @@
         <a href="#joint-reconciler" onclick="loadDoc('joint-reconciler')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Joint Reconciler (Zero Trade-offs)</a>
         <a href="#vector-memory" onclick="loadDoc('vector-memory')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Whole-Repo ChromaDB Memory</a>
         <a href="#sarif-export" onclick="loadDoc('sarif-export')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">OASIS SARIF v2.1.0 Specification</a>
+        <a href="#data-privacy" onclick="loadDoc('data-privacy')" class="sidebar-link block px-2.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Data Privacy & Storage Architecture</a>
       </div>
 
       <!-- Category 4: Configuration & Tuning -->
@@ -948,6 +949,162 @@ jobs:
           <p>
             SARIF is the international OASIS standard for static analysis tools. By generating valid SARIF v2.1.0 JSON reports, CodeAuditAI integrates natively with GitHub Advanced Security, GitLab Security Dashboard, Azure DevOps, and IDE extensions without custom glue code.
           </p>
+        `
+      },
+
+      "data-privacy": {
+        category: "Engine Architecture",
+        title: "Data Privacy & Repository Storage",
+        time: "5 min read",
+        headings: [
+          { id: "privacy-core-dilemma", text: "The Source Code Privacy Dilemma" },
+          { id: "local-first-guarantee", text: "100% Local-First Guarantee (CLI & Local Studio)" },
+          { id: "cloud-storage-architecture", text: "How Cloud Web Studios Store & Isolate Repos" },
+          { id: "ephemeral-sandboxes", text: "Ephemeral RAM-Disk Sandboxes (tmpfs)" },
+          { id: "zero-retention-ttl", text: "Zero-Retention Auto-Purge & TTL Policy" },
+          { id: "byok-zero-training", text: "BYOK & Zero Model Training Guarantees" },
+          { id: "deployment-matrix", text: "Local CLI vs Cloud Web Studio Decision Matrix" }
+        ],
+        content: `
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#202124] dark:text-white">Data Privacy & Repository Storage Architecture</h1>
+          <p class="text-sm text-google-greyText dark:text-slate-300">
+            A comprehensive guide to CodeAuditAI's privacy-first dual deployment model: from air-gapped local execution to ephemeral zero-retention cloud sandboxes.
+          </p>
+
+          <h2 id="privacy-core-dilemma" class="text-lg font-bold text-[#202124] dark:text-white pt-4">The Source Code Privacy Dilemma</h2>
+          <p>
+            Source code is a company's or developer's most valuable intellectual property. Proprietary algorithms, business logic, internal API contracts, and cryptographic configurations must never be leaked, harvested, or stored on untrusted multi-tenant servers.
+          </p>
+          <p>
+            Traditional SaaS code scanners demand full read access to private GitHub repositories and store cloned copies on persistent server hard drives, creating serious supply-chain attack vectors and compliance barriers (SOC2, HIPAA, GDPR).
+          </p>
+          <p>
+            <strong>CodeAuditAI solves this fundamentally through a dual-deployment model:</strong>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div class="p-4 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Air-Gapped & Local</span>
+              <h3 class="font-bold text-sm text-[#202124] dark:text-white">1. Local-First CLI & Studio</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300">Runs strictly on <code>localhost:8000</code>. Zero source code bytes leave your laptop or private VPC. 100% confidential.</p>
+            </div>
+            <div class="p-4 rounded-2xl border-2 border-blue-500/40 bg-blue-50/50 dark:bg-blue-950/20 space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Zero-Install Web</span>
+              <h3 class="font-bold text-sm text-[#202124] dark:text-white">2. Ephemeral Cloud Studio</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300">Runs in temporary isolated RAM-disks. Repositories and vector indices are automatically wiped immediately upon audit delivery.</p>
+            </div>
+          </div>
+
+          <h2 id="local-first-guarantee" class="text-lg font-bold text-[#202124] dark:text-white pt-6">100% Local-First Guarantee (CLI & Local Studio)</h2>
+          <p>
+            When you run <code>codeaudit audit ./myproject</code> or launch the visual interface with <code>codeaudit web</code>:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+            <li><strong>No Centralized Telemetry:</strong> CodeAuditAI does not transmit code, project names, or file paths to any CodeAuditAI telemetry server.</li>
+            <li><strong>Local SQLite Storage:</strong> All audit history, file importance scores, and findings are stored in your local <code>codeaudit.db</code>.</li>
+            <li><strong>Local ChromaDB Vector Index:</strong> Embeddings are computed and stored strictly in your local <code>chroma_db/</code> directory.</li>
+            <li><strong>Air-Gapped LLM Compatibility:</strong> You can point CodeAuditAI to local Ollama (e.g. <code>deepseek-coder</code>, <code>llama3</code>) or vLLM instances without any internet connection.</li>
+          </ul>
+
+          <h2 id="cloud-storage-architecture" class="text-lg font-bold text-[#202124] dark:text-white pt-6">How Cloud Web Studios Store & Isolate Cloned Repos</h2>
+          <p>
+            When CodeAuditAI is hosted as a public cloud web studio (e.g. on <code>codeaudit.ai</code>), repositories are never stored in a shared persistent folder. Instead, the cloud engine implements a 4-layer sandboxed isolation lifecycle:
+          </p>
+
+          <div class="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-700">
+User submits GitHub URL
+       │
+       ▼
+[Ephemeral Worker Spawned] ──► Isolated Container / MicroVM
+       │
+       ▼
+[Mount tmpfs RAM-Disk]     ──► /tmp/audits/{session_uuid}/ (RAM only, no SSD write)
+       │
+       ▼
+[git clone --depth=1]      ──► Shallow single-commit clone
+       │
+       ▼
+[AST Parse + Vector Chunk] ──► In-memory session namespace
+       │
+       ▼
+[Tri-Agent Audit Engine]   ──► BYOK Direct Pipe (Google / OpenAI / Claude)
+       │
+       ▼
+[Deliver SARIF & Markdown] ──► Streamed to user's browser
+       │
+       ▼
+[Trigger Immediate Wipe]   ──► rm -rf /tmp/audits/{session_uuid}/ + purge vector cache
+          </div>
+
+          <h2 id="ephemeral-sandboxes" class="text-lg font-bold text-[#202124] dark:text-white pt-6">Ephemeral RAM-Disk Sandboxes (tmpfs)</h2>
+          <p>
+            In production cloud deployments, cloned code is mounted exclusively in a Linux <code>tmpfs</code> RAM-disk. This ensures:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+            <li><strong>Zero Non-Volatile Persistence:</strong> Source files reside only in server volatile RAM during the analysis pass and are never flushed to persistent storage blocks.</li>
+            <li><strong>Strict Tenant Isolation:</strong> Every audit session runs under a cryptographically random UUID namespace with restricted POSIX file permissions (<code>chmod 700</code>).</li>
+            <li><strong>High-Speed Ingestion:</strong> AST parsing and AST tokenization operate at bus speed in memory (up to 10x faster than disk I/O).</li>
+          </ul>
+
+          <h2 id="zero-retention-ttl" class="text-lg font-bold text-[#202124] dark:text-white pt-6">Zero-Retention Auto-Purge & TTL Policy</h2>
+          <p>
+            CodeAuditAI adheres to a strict <strong>Zero-Data Retention (ZDR)</strong> lifecycle:
+          </p>
+          <ol class="list-decimal pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+            <li><strong>Immediate Post-Audit Purge:</strong> As soon as the final reconciler synthesis completes and the SARIF report is returned, a Python background task calls <code>shutil.rmtree()</code> on the clone directory.</li>
+            <li><strong>Vector Index Cleanup:</strong> ChromaDB drops the collection associated with that session UUID.</li>
+            <li><strong>Hard TTL Safety Net (1 Hour):</strong> An automated cron sweeper enforces a maximum 1-hour Time-To-Live on any dangling directories or interrupted requests, preventing orphaned data accumulation.</li>
+          </ol>
+
+          <h2 id="byok-zero-training" class="text-lg font-bold text-[#202124] dark:text-white pt-6">BYOK & Zero Model Training Guarantees</h2>
+          <p>
+            CodeAuditAI does not train foundational AI models. Under our <strong>Bring Your Own Key (BYOK)</strong> architecture:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+            <li><strong>Direct Provider APIs:</strong> Requests are dispatched directly to Google AI Studio, Anthropic, or OpenAI using the customer's own API credentials.</li>
+            <li><strong>Zero Training Terms:</strong> Enterprise API tiers (Google Cloud Vertex AI, OpenAI Enterprise, Anthropic Commercial API) contractually guarantee that prompts and code snippets are never used to train or fine-tune public models.</li>
+            <li><strong>In-Memory Key Handling:</strong> API keys entered in the BYOK modal are encrypted or held strictly in transient browser session storage, never logged to server disk.</li>
+          </ul>
+
+          <h2 id="deployment-matrix" class="text-lg font-bold text-[#202124] dark:text-white pt-6">Local CLI vs Cloud Web Studio Decision Matrix</h2>
+          <div class="overflow-x-auto pt-2">
+            <table class="w-full text-left border-collapse font-sans text-xs">
+              <thead>
+                <tr class="border-b border-google-greyBorder dark:border-google-darkBorder text-slate-500">
+                  <th class="py-2.5 px-3">Criteria</th>
+                  <th class="py-2.5 px-3 text-emerald-600">Local CLI / Studio (Option A)</th>
+                  <th class="py-2.5 px-3 text-blue-600">Cloud Web Studio (Option B)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-google-greyBorder dark:divide-google-darkBorder text-slate-700 dark:text-slate-300">
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold">Repository Location</td>
+                  <td class="py-2.5 px-3">100% on local machine / private VPC</td>
+                  <td class="py-2.5 px-3">Ephemeral isolated RAM-disk sandbox</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold">Data Retention</td>
+                  <td class="py-2.5 px-3">Full local user ownership</td>
+                  <td class="py-2.5 px-3"><strong>Zero Retention</strong> (purged immediately)</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold">Ideal Use Case</td>
+                  <td class="py-2.5 px-3">Proprietary IP, enterprise monorepos, CI/CD</td>
+                  <td class="py-2.5 px-3">Open-source repos, quick checks, demos</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold">Installation Required</td>
+                  <td class="py-2.5 px-3">Yes (<code>pip install</code> or one-line bash)</td>
+                  <td class="py-2.5 px-3"><strong>None</strong> (instant browser access)</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 px-3 font-semibold">Air-Gapped / Offline</td>
+                  <td class="py-2.5 px-3">Yes (Ollama, vLLM, private endpoints)</td>
+                  <td class="py-2.5 px-3">Requires cloud network connectivity</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         `
       },
 
