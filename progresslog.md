@@ -487,7 +487,51 @@ When deployed on the public web:
 
 ### 🧪 Verification
 - [x] Verified `/docs` and `index.html` pass HTML structure and routing tests.
-- [x] Verified all privacy-first messaging aligns with user value proposition.
+---
+
+## Session 11 — 2026-10-15 | Codebase Self-Audit Remediation from CodeAuditAI SARIF Findings
+
+### 🎯 Objective & Overview
+Executed a full self-audit review of the CodeAuditAI codebase using findings recorded in `CodeAuditAI_findings.sarif` generated during real repository testing. Hardened system security, resilience, concurrency boundaries, and data integrity across all core application services.
+
+---
+
+### 🛡️ Remediation Matrix Across Services
+
+1. **SQLite Storage Engine (`app/services/sqlite_db.py`)**:
+   - **CWE-404**: Enabled strict foreign key enforcement via `PRAGMA foreign_keys = ON;`.
+   - **CWE-665**: Configured explicit connection `timeout=30.0` to eliminate `database is locked` operational errors under concurrent load.
+   - **High-Throughput Concurrency**: Enabled Write-Ahead Logging (`PRAGMA journal_mode = WAL;`) and added multi-column indexes (`idx_files_repo_path`, `idx_files_path`, `idx_audits_path`).
+
+2. **Vector DB Storage & Semantic Chunker (`app/services/vector_db.py`)**:
+   - **CWE-22**: Enforced path normalization (`os.path.realpath`, `os.path.abspath`) for all chunk IDs, metadata properties, and query filters to prevent key collision between relative and absolute paths.
+   - **CWE-400**: Added file size guardrails (`MAX_INDEX_FILE_SIZE = 5MB`) to protect against memory exhaustion from oversized or binary assets.
+   - **Error Handling**: Replaced silent exception swallowing with structured diagnostics.
+
+3. **Repository Mapper Service (`app/services/repo_mapper.py`)**:
+   - **CWE-22**: Canonicalized repository directory inputs using `os.path.realpath` and verified directory existence.
+   - **CWE-89**: Offloaded blocking filesystem walking (`os.walk`) to worker thread pool via `asyncio.to_thread` to eliminate event loop starvation.
+
+4. **FastAPI Endpoints & Routing Gateway (`app/main.py`)**:
+   - **CWE-22**: Created `sanitize_input_path()` utility and applied across all endpoints accepting `file_path` and `repo_path` (`/index-file`, `/analyze`, `/analyze-repo`, `/list-files`, `/get-audit`, `/clear-cache`, `/api/projects`, `/export/*`).
+   - **CWE-78**: Sanitized GitHub clone slugs (`re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_slug)`) and enforced destination directory confinement inside `CLONED_REPOS_DIR`.
+   - **CWE-400**: Replaced blocking synchronous subprocess execution with native `asyncio.create_subprocess_exec` and explicit async timeout boundaries.
+   - **CWE-209**: Suppressed raw traceback leakage in API error responses.
+
+5. **Report Generator (`app/services/report_generator.py`)**:
+   - **CWE-20 & CWE-393**: Implemented defensive input type validation and protected scorecards against `ZeroDivisionError` and missing dictionaries.
+
+6. **Documentation & Typo Fixes**:
+   - **`learning/00_Core_Concepts.md`**: Fixed typo `Shieling` $\to$ `Shielding`.
+   - **`context.md`**: Replaced hardcoded host file paths with `${PROJECT_ROOT}`.
+
+---
+
+### 🧪 Verification
+- [x] Verified SQLite WAL and foreign key pragma activation.
+- [x] Verified path canonicalization and directory traversal blocking.
+- [x] Verified defensive report generator percentage fallbacks.
+- [x] Ran FastAPI test client validation across health and analysis endpoints.
 
 ---
 

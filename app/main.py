@@ -61,6 +61,16 @@ def calculate_file_hash(file_path: str) -> str:
     return hasher.hexdigest()
 
 
+def sanitize_input_path(path_str: str) -> str:
+    """Canonicalizes and validates input path against directory traversal payloads (CWE-22)."""
+    if not path_str or not path_str.strip():
+        raise HTTPException(status_code=400, detail="Path parameter cannot be empty.")
+    clean = path_str.strip()
+    if "\x00" in clean:
+        raise HTTPException(status_code=400, detail="Invalid character detected in path.")
+    return os.path.realpath(os.path.abspath(clean))
+
+
 def find_repo_root(file_path: str) -> str:
     """Walks upwards from a file path to find the repository root directory (.git or fallback)."""
     path = os.path.abspath(file_path)
@@ -189,24 +199,25 @@ async def api_index_file(file_path: str):
     Locates, splits, and indexes a local file into ChromaDB vector storage with dynamic language detection.
     """
     try:
-        if not os.path.exists(file_path):
+        clean_path = sanitize_input_path(file_path)
+        if not os.path.exists(clean_path) or not os.path.isfile(clean_path):
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
             
-        file_hash = calculate_file_hash(file_path)
-        repo_root = find_repo_root(file_path)
+        file_hash = calculate_file_hash(clean_path)
+        repo_root = find_repo_root(clean_path)
         
         # Check if we already have a summary cached in SQLite, otherwise generate a default one
-        cached_meta = sqlite_service.get_file_metadata(file_path)
+        cached_meta = sqlite_service.get_file_metadata(clean_path)
         summary = cached_meta["summary"] if cached_meta else "Single file manually indexed."
         
         # Index in vector DB
-        vector_service.delete_file_index(file_path)
-        chunks_indexed = vector_service.index_file(file_path, file_role=summary)
+        vector_service.delete_file_index(clean_path)
+        chunks_indexed = vector_service.index_file(clean_path, file_role=summary)
         
         # Upsert metadata in SQLite
         sqlite_service.upsert_file_metadata(
             repo_path=repo_root,
-            file_path=file_path,
+            file_path=clean_path,
             file_hash=file_hash,
             summary=summary,
             importance="Medium"
@@ -214,9 +225,11 @@ async def api_index_file(file_path: str):
         
         return {
             "status": "success",
-            "file_processed": file_path,
+            "file_processed": clean_path,
             "chunks_added": chunks_indexed
         }
+    except HTTPException:
+        raise
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -249,21 +262,22 @@ async def api_analyze_file(file_path: str):
     """
     Analyzes a local file with smart database-backed caching and repository-wide context mapping.
     """
-    if not os.path.exists(file_path):
+    clean_path = sanitize_input_path(file_path)
+    if not os.path.exists(clean_path) or not os.path.isfile(clean_path):
         raise HTTPException(status_code=404, detail=f"Target file not found: {file_path}")
 
     try:
-        current_hash = calculate_file_hash(file_path)
+        current_hash = calculate_file_hash(clean_path)
         
         # 1. Check SQLite Persistent Cache
-        cached_meta = sqlite_service.get_file_metadata(file_path)
-        cached_audit = sqlite_service.get_audit(file_path)
+        cached_meta = sqlite_service.get_file_metadata(clean_path)
+        cached_audit = sqlite_service.get_audit(clean_path)
         
         if cached_meta and cached_audit and cached_meta["hash"] == current_hash:
-            print(f"🛡️ [Cache Hit] Serving cached audit for: {file_path}")
+            print(f"🛡️ [Cache Hit] Serving cached audit for: {clean_path}")
             return {
                 "status": "success",
-                "target_file": file_path,
+                "target_file": clean_path,
                 "cached": True,
                 "audit_results": {
                     "security_analysis": cached_audit["security_report"],
@@ -272,26 +286,26 @@ async def api_analyze_file(file_path: str):
             }
 
         # 2. Cache Miss: Retrieve/Build Repository Context
-        repo_root = find_repo_root(file_path)
+        repo_root = find_repo_root(clean_path)
         repo_data = await repo_mapper.map_repository(repo_root)
         
         # Fetch updated file role/summary from mapper
-        updated_meta = sqlite_service.get_file_metadata(file_path)
+        updated_meta = sqlite_service.get_file_metadata(clean_path)
         file_role = updated_meta["summary"] if updated_meta else ""
         
         # 3. Retrieve database semantic clues
-        print(f"🔍 [Pipeline] Querying semantic context vectors for: {file_path}")
+        print(f"🔍 [Pipeline] Querying semantic context vectors for: {clean_path}")
         db_hints = vector_service.semantic_search(
-            query=f"vulnerabilities or performance issues in {os.path.basename(file_path)}", 
+            query=f"vulnerabilities or performance issues in {os.path.basename(clean_path)}", 
             limit=3
         )
         context_strings = [hit["content"] for hit in db_hints]
 
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(clean_path, "r", encoding="utf-8", errors="ignore") as f:
             source_code = f.read()
 
         initial_scorecard = {
-            "file_path": file_path,
+            "file_path": clean_path,
             "source_code": source_code,
             "repo_path": repo_root,
             "repo_map": repo_data["repo_map_string"],
@@ -309,21 +323,21 @@ async def api_analyze_file(file_path: str):
         performance_report = final_state.get("performance_report", "Analysis failed.")
 
         # 4. Save audit results to database cache
-        sqlite_service.upsert_audit(file_path, security_report, performance_report)
+        sqlite_service.upsert_audit(clean_path, security_report, performance_report)
         
         # Double check that MD5 hash is stored correctly
         sqlite_service.upsert_file_metadata(
             repo_path=repo_root,
-            file_path=file_path,
+            file_path=clean_path,
             file_hash=current_hash,
             summary=file_role,
             importance=updated_meta["importance"] if updated_meta else "Medium",
-            language=updated_meta["language"] if updated_meta else ""
+            language=updated_meta.get("language", "") if updated_meta else ""
         )
 
         return {
             "status": "success",
-            "target_file": file_path,
+            "target_file": clean_path,
             "cached": False,
             "audit_results": {
                 "security_analysis": security_report,
@@ -344,16 +358,17 @@ async def api_analyze_repository(
     Maps and indexes a whole repository.
     Optionally triggers parallel audits for all detected High-importance files (e.g. entrypoints, configurations).
     """
-    if not os.path.exists(repo_path) or not os.path.isdir(repo_path):
+    clean_repo = sanitize_input_path(repo_path)
+    if not os.path.exists(clean_repo) or not os.path.isdir(clean_repo):
         raise HTTPException(status_code=400, detail=f"Invalid repository directory: {repo_path}")
 
-    async with get_repo_lock(repo_path):
+    async with get_repo_lock(clean_repo):
         try:
             # 1. Map and index repository
-            repo_data = await repo_mapper.map_repository(repo_path)
+            repo_data = await repo_mapper.map_repository(clean_repo)
             
             # 2. Retrieve all files
-            repo_files = sqlite_service.get_repo_files(repo_path)
+            repo_files = sqlite_service.get_repo_files(clean_repo)
             
             audited_files_results = []
             
@@ -449,54 +464,52 @@ async def api_analyze_github(
     Accepts a GitHub repository URL, clones it locally (or pulls latest if already cloned),
     then runs the full repository analysis pipeline on it.
     """
-    # Basic validation: must look like a GitHub URL
-    if not re.match(r"https?://(www\.)?github\.com/[\w\-]+/[\w\-\.]+", github_url):
+    clean_url = github_url.strip()
+    if not re.match(r"^https?://(www\.)?github\.com/[a-zA-Z0-9_\-]+/[a-zA-Z0-9_\-\.]+(/)?$", clean_url):
         raise HTTPException(status_code=400, detail="Invalid GitHub URL. Must be in the format: https://github.com/owner/repo")
 
-    # Derive repo name from URL (strip trailing .git if present)
-    repo_slug = github_url.rstrip("/").split("/")[-1]
-    if repo_slug.endswith(".git"):
-        repo_slug = repo_slug[:-4]
+    # Securely derive and sanitize repository directory name (CWE-78, CWE-22)
+    raw_slug = clean_url.rstrip("/").split("/")[-1]
+    if raw_slug.endswith(".git"):
+        raw_slug = raw_slug[:-4]
+    repo_slug = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_slug)
+    if not repo_slug:
+        raise HTTPException(status_code=400, detail="Invalid repository slug in URL.")
 
-    local_repo_path = os.path.join(CLONED_REPOS_DIR, repo_slug)
+    local_repo_path = os.path.realpath(os.path.abspath(os.path.join(CLONED_REPOS_DIR, repo_slug)))
+    # Ensure clone target strictly resides within CLONED_REPOS_DIR (CWE-22)
+    if not local_repo_path.startswith(os.path.realpath(CLONED_REPOS_DIR)):
+        raise HTTPException(status_code=400, detail="Directory traversal attempt detected in target path.")
 
     try:
-        loop = asyncio.get_event_loop()
-
         if os.path.exists(local_repo_path):
-            # Repo already cloned — pull latest changes instead
             print(f"♻️  [GitHub] Repo '{repo_slug}' already cloned. Pulling latest...")
-            result = await loop.run_in_executor(
-                None,
-                lambda: subprocess.run(
-                    ["git", "-C", local_repo_path, "pull"],
-                    capture_output=True, text=True, timeout=120
-                )
+            proc = await asyncio.create_subprocess_exec(
+                "git", "-C", local_repo_path, "pull",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
-            if result.returncode != 0:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"git pull failed: {result.stderr.strip()}"
-                )
-            print(f"✅ [GitHub] Pull complete: {result.stdout.strip() or 'Already up to date.'}")
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+            if proc.returncode != 0:
+                err_msg = stderr.decode().strip()
+                print(f"❌ [GitHub] git pull failed: {err_msg}")
+                raise HTTPException(status_code=500, detail=f"git pull failed: {err_msg}")
+            print(f"✅ [GitHub] Pull complete: {stdout.decode().strip() or 'Already up to date.'}")
         else:
-            # Fresh clone
-            print(f"📥 [GitHub] Cloning '{github_url}' into '{local_repo_path}'...")
-            result = await loop.run_in_executor(
-                None,
-                lambda: subprocess.run(
-                    ["git", "clone", "--depth=1", github_url, local_repo_path],
-                    capture_output=True, text=True, timeout=300
-                )
+            print(f"📥 [GitHub] Cloning '{clean_url}' into '{local_repo_path}'...")
+            proc = await asyncio.create_subprocess_exec(
+                "git", "clone", "--depth=1", clean_url, local_repo_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
-            if result.returncode != 0:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"git clone failed: {result.stderr.strip()}"
-                )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+            if proc.returncode != 0:
+                err_msg = stderr.decode().strip()
+                print(f"❌ [GitHub] git clone failed: {err_msg}")
+                raise HTTPException(status_code=500, detail=f"git clone failed: {err_msg}")
             print(f"✅ [GitHub] Clone complete.")
 
-    except subprocess.TimeoutExpired:
+    except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="Git operation timed out after 5 minutes.")
 
 
@@ -752,7 +765,24 @@ def api_list_files(repo_path: Optional[str] = None):
     """
     try:
         if repo_path:
-            files = sqlite_service.get_repo_files(repo_path)
+            clean_repo = repo_path.strip()
+            # If a GitHub URL was supplied, resolve it to local cloned directory or query DB
+            if clean_repo.startswith("http://") or clean_repo.startswith("https://"):
+                slug = clean_repo.rstrip("/").split("/")[-1]
+                if slug.endswith(".git"):
+                    slug = slug[:-4]
+                slug = re.sub(r'[^a-zA-Z0-9_\-]', '_', slug)
+                local_clone = os.path.realpath(os.path.abspath(os.path.join(CLONED_REPOS_DIR, slug)))
+                if os.path.exists(local_clone):
+                    clean_repo = local_clone
+                else:
+                    files = sqlite_service.get_repo_files(clean_repo)
+                    if files:
+                        return {"status": "success", "repo_path": clean_repo, "total_files": len(files), "files": files}
+            else:
+                clean_repo = sanitize_input_path(clean_repo)
+
+            files = sqlite_service.get_repo_files(clean_repo)
         else:
             # Query all files across every repo
             with sqlite_service._get_connection() as conn:
@@ -765,6 +795,8 @@ def api_list_files(repo_path: Optional[str] = None):
             "total_files": len(files),
             "files": files
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list files: {str(e)}")
 
@@ -795,12 +827,23 @@ def api_delete_project(repo_path: str = Query(..., description="Repository path 
     Removes a project from the database, including its indexed files and cached audits.
     """
     try:
-        success = sqlite_service.delete_repository(repo_path)
+        clean_path = repo_path.strip()
+        if not (clean_path.startswith("http://") or clean_path.startswith("https://")):
+            clean_path = sanitize_input_path(clean_path)
+            
+        success = sqlite_service.delete_repository(clean_path)
+        # Also clean up filesystem if it was cloned in CLONED_REPOS_DIR
+        if clean_path.startswith(os.path.realpath(CLONED_REPOS_DIR)) and os.path.exists(clean_path):
+            import shutil
+            shutil.rmtree(clean_path, ignore_errors=True)
+
         return {
             "status": "success",
             "message": f"Project '{repo_path}' and associated records removed successfully.",
             "deleted": success
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete project: {str(e)}")
 
@@ -814,7 +857,11 @@ def api_get_audit(file_path: str):
     """
     Returns the cached audit result for a specific file path, or 404 if not found.
     """
-    audit = sqlite_service.get_audit(file_path)
+    clean_path = sanitize_input_path(file_path)
+    audit = sqlite_service.get_audit(clean_path)
+    if not audit:
+        # Check raw path fallback for legacy cache entries
+        audit = sqlite_service.get_audit(file_path)
     if not audit:
         raise HTTPException(
             status_code=404,
@@ -822,7 +869,7 @@ def api_get_audit(file_path: str):
         )
     return {
         "status": "success",
-        "file_path": file_path,
+        "file_path": clean_path,
         "audit": audit
     }
 
@@ -842,8 +889,11 @@ def api_clear_cache(file_path: str):
             sqlite_service.clear_all_audits()
             return {"status": "success", "message": "All cached audits have been cleared."}
         else:
-            sqlite_service.clear_audit(file_path)
-            return {"status": "success", "message": f"Cached audit cleared for: {file_path}"}
+            clean_path = sanitize_input_path(file_path)
+            sqlite_service.clear_audit(clean_path)
+            return {"status": "success", "message": f"Cached audit cleared for: {clean_path}"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
 
@@ -948,9 +998,12 @@ def api_export_sarif(repo_path: Optional[str] = None):
     """
     try:
         if repo_path:
-            repo_files = sqlite_service.get_repo_files(repo_path)
-            repo_info = sqlite_service.get_repository(repo_path)
-            repo_name = repo_info["name"] if repo_info else os.path.basename(repo_path.rstrip(os.sep))
+            clean_repo = repo_path.strip()
+            if not (clean_repo.startswith("http://") or clean_repo.startswith("https://")):
+                clean_repo = sanitize_input_path(clean_repo)
+            repo_files = sqlite_service.get_repo_files(clean_repo)
+            repo_info = sqlite_service.get_repository(clean_repo)
+            repo_name = repo_info["name"] if repo_info else os.path.basename(clean_repo.rstrip(os.sep))
         else:
             with sqlite_service._get_connection() as conn:
                 cursor = conn.cursor()
@@ -976,6 +1029,8 @@ def api_export_sarif(repo_path: Optional[str] = None):
             media_type="application/sarif+json",
             headers={"Content-Disposition": f"attachment; filename={repo_name.replace(' ', '_')}_findings.sarif"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"SARIF export failed: {str(e)}")
 
@@ -991,9 +1046,12 @@ def api_export_markdown(repo_path: Optional[str] = None):
     """
     try:
         if repo_path:
-            repo_files = sqlite_service.get_repo_files(repo_path)
-            repo_info = sqlite_service.get_repository(repo_path)
-            repo_name = repo_info["name"] if repo_info else os.path.basename(repo_path.rstrip(os.sep))
+            clean_repo = repo_path.strip()
+            if not (clean_repo.startswith("http://") or clean_repo.startswith("https://")):
+                clean_repo = sanitize_input_path(clean_repo)
+            repo_files = sqlite_service.get_repo_files(clean_repo)
+            repo_info = sqlite_service.get_repository(clean_repo)
+            repo_name = repo_info["name"] if repo_info else os.path.basename(clean_repo.rstrip(os.sep))
             repo_summary = repo_info["summary"] if repo_info else ""
         else:
             with sqlite_service._get_connection() as conn:

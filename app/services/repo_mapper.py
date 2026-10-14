@@ -125,20 +125,26 @@ class RepositoryMapperService:
         summarizes new/modified files asynchronously, indexes modified files in ChromaDB,
         and saves repository metadata.
         """
-        repo_path = os.path.abspath(repo_path)
+        # Strict canonicalization against directory escape vectors (CWE-22)
+        repo_path = os.path.realpath(os.path.abspath(repo_path))
+        if not os.path.exists(repo_path) or not os.path.isdir(repo_path):
+            raise ValueError(f"Invalid or non-existent repository directory: {repo_path}")
+
         repo_name = os.path.basename(repo_path.rstrip(os.sep))
-        
         print(f"📂 [RepoMapper] Scanning repository: {repo_name} at {repo_path}...")
         
-        # 1. Walk filesystem to gather all files to process
-        all_files = []
-        for root, dirs, files in os.walk(repo_path):
-            # Prune directory search to skip ignored folders
-            dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
-            for file in files:
-                full_path = os.path.join(root, file)
-                if not self._should_ignore(full_path, repo_path):
-                    all_files.append(full_path)
+        # 1. Walk filesystem in thread pool to prevent event loop starvation (CWE-89)
+        def _scan_filesystem():
+            files_collected = []
+            for root, dirs, files in os.walk(repo_path):
+                dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS]
+                for file in files:
+                    full_path = os.path.join(root, file)
+                    if not self._should_ignore(full_path, repo_path):
+                        files_collected.append(full_path)
+            return files_collected
+
+        all_files = await asyncio.to_thread(_scan_filesystem)
 
         # 2. Identify new/modified files vs cached ones
         files_to_process = []

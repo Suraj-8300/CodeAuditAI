@@ -33,13 +33,18 @@ def generate_markdown_report(
     """
     Builds a full-fledged Markdown audit report.
     """
+    if not isinstance(audited_files, list):
+        audited_files = []
+
     total_files = len(audited_files)
     critical_count = 0
     warning_count = 0
     safe_count = 0
 
     for f in audited_files:
-        sec = f.get("security_report", "")
+        if not isinstance(f, dict):
+            continue
+        sec = str(f.get("security_report", "") or "")
         rating = _extract_rating(sec)
         if rating == "CRITICAL":
             critical_count += 1
@@ -57,6 +62,11 @@ def generate_markdown_report(
         overall_status = "🟡 MODERATE RISK (Warnings Require Review)"
     else:
         overall_status = "🟢 HEALTHY (No Major Vulnerabilities Identified)"
+
+    # Defensive calculation of percentage values (CWE-393)
+    crit_pct = (critical_count / total_files * 100.0) if total_files > 0 else 0.0
+    warn_pct = (warning_count / total_files * 100.0) if total_files > 0 else 0.0
+    safe_pct = (safe_count / total_files * 100.0) if total_files > 0 else 0.0
 
     lines = [
         f"# 🛡️ CodeAuditAI Comprehensive Security & Performance Report",
@@ -76,9 +86,9 @@ def generate_markdown_report(
         f"",
         f"| Severity Level | File Count | Percentage |",
         f"| :--- | :---: | :---: |",
-        f"| 🔴 **CRITICAL** | {critical_count} | {(critical_count/total_files*100) if total_files else 0:.1f}% |",
-        f"| 🟡 **WARNING** | {warning_count} | {(warning_count/total_files*100) if total_files else 0:.1f}% |",
-        f"| 🟢 **SAFE** | {safe_count} | {(safe_count/total_files*100) if total_files else 0:.1f}% |",
+        f"| 🔴 **CRITICAL** | {critical_count} | {crit_pct:.1f}% |",
+        f"| 🟡 **WARNING** | {warning_count} | {warn_pct:.1f}% |",
+        f"| 🟢 **SAFE** | {safe_count} | {safe_pct:.1f}% |",
         f"",
     ]
 

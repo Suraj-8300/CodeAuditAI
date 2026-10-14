@@ -109,19 +109,28 @@ class VectorStorageService:
                 separators=["\n\n", "\n", " ", ""]
             )
 
+    MAX_INDEX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB threshold against DoS memory exhaustion (CWE-400)
+
     def index_file(self, file_path: str, file_role: str = "") -> int:
         """
         Reads a local file, splits it into syntax-aware chunks, enriches each chunk
         with contextual metadata headers (Contextual Chunking), and indexes into ChromaDB.
         Returns the number of indexed chunks.
         """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Target file not found: {file_path}")
+        norm_path = os.path.abspath(os.path.normpath(file_path))
+        if not os.path.exists(norm_path):
+            raise FileNotFoundError(f"Target file not found: {norm_path}")
+
+        # Protect against Denial of Service via giant/unbounded files (CWE-400)
+        file_size = os.path.getsize(norm_path)
+        if file_size > self.MAX_INDEX_FILE_SIZE:
+            print(f"⚠️ [VectorStorage] Skipping indexing for oversized file ({file_size} bytes): {norm_path}")
+            return 0
             
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(norm_path, "r", encoding="utf-8", errors="ignore") as f:
             source_code = f.read()
             
-        splitter = self._get_splitter_for_file(file_path)
+        splitter = self._get_splitter_for_file(norm_path)
         raw_chunks = splitter.split_text(source_code)
         if not raw_chunks:
             return 0
@@ -129,16 +138,16 @@ class VectorStorageService:
         # Contextual Enrichment: prepending file name & role/summary to each chunk
         # This keeps critical high-level context attached to the chunk inside the vector space.
         enriched_chunks = []
-        filename = os.path.basename(file_path)
+        filename = os.path.basename(norm_path)
         role_info = f" | Role: {file_role}" if file_role else ""
         
         for chunk in raw_chunks:
             header = f"[File: {filename}{role_info}]\n---\n"
             enriched_chunks.append(header + chunk)
             
-        # Generate unique structured tracking keys
-        chunk_ids = [f"{file_path}_chunk_{i}" for i in range(len(enriched_chunks))]
-        metadatas = [{"source_file": file_path} for _ in range(len(enriched_chunks))]
+        # Generate canonical, collision-free tracking keys using normalized path (CWE-22)
+        chunk_ids = [f"{norm_path}_chunk_{i}" for i in range(len(enriched_chunks))]
+        metadatas = [{"source_file": norm_path} for _ in range(len(enriched_chunks))]
         
         # Commit directly to our collection
         self.collection.add(
@@ -152,18 +161,21 @@ class VectorStorageService:
         """
         Removes all indexed chunks associated with a specific file path.
         """
+        norm_path = os.path.abspath(os.path.normpath(file_path))
         try:
-            self.collection.delete(where={"source_file": file_path})
+            self.collection.delete(where={"source_file": norm_path})
         except Exception as e:
-            # Collection might be empty or key missing; fail gracefully
-            print(f"⚠️ Warning: failed to delete index for {file_path}: {e}")
+            # Collection might be empty or key missing; log structured diagnostic
+            if "not found" not in str(e).lower():
+                print(f"⚠️ [VectorStorage] Notice deleting index for {norm_path}: {e}")
 
     def semantic_search(self, query: str, limit: int = 2, filter_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Queries the vector space and returns the closest matching code structural segments.
         Optionally filters results to a specific file.
         """
-        where_clause = {"source_file": filter_file} if filter_file else None
+        norm_filter = os.path.abspath(os.path.normpath(filter_file)) if filter_file else None
+        where_clause = {"source_file": norm_filter} if norm_filter else None
         
         results = self.collection.query(
             query_texts=[query],

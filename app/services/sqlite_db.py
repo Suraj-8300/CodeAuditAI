@@ -8,8 +8,10 @@ class SQLiteStorageService:
         self._init_db()
 
     def _get_connection(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA journal_mode = WAL;")
         return conn
 
     def _init_db(self):
@@ -51,6 +53,11 @@ class SQLiteStorageService:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            
+            # Performance indexes
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_repo_path ON files(repo_path);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_files_path ON files(file_path);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_audits_path ON audits(file_path);")
             
             conn.commit()
 

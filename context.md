@@ -10,7 +10,7 @@
 - **Type**: Autonomous Multi-Agent Code Security & Performance Review Studio
 - **Language / Runtime**: Python 3.10 – 3.14+
 - **Primary Frameworks**: FastAPI, LangGraph, ChromaDB, SQLite, Rich CLI, Tailwind CSS (CDN), Prism.js
-- **Repository Location**: `/home/suraj/Lab/Projects/01CodeAuditAI/`
+- **Repository Location**: `${PROJECT_ROOT}` (Local workspace root)
 - **GitHub Remote**: `https://github.com/Suraj-8300/CodeAuditAI.git` (branch: `main`)
 - **Package Spec**: `pyproject.toml` with console script entry point `codeaudit = "app.cli:main"`
 
